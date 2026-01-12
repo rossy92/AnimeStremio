@@ -1,57 +1,55 @@
 const axios = require("axios");
 
 const PROXY_URL = "https://gay-toucan-newross-cd988fb6.koyeb.app";
+const PASSWORD = "4Str3m10";
 
 async function getStreams(title) {
-    // Proviamo le rotte "nude" senza sottocartelle
-    const paths = [
-        `${PROXY_URL}/search/${encodeURIComponent(title)}`,
-        `${PROXY_URL}/${encodeURIComponent(title)}`,
-        `${PROXY_URL}/anilist/${encodeURIComponent(title)}`
-    ];
+    try {
+        console.log(`[Anikai] Tentativo finale su proxy con password: ${title}`);
 
-    for (const url of paths) {
-        try {
-            console.log(`Bussando a: ${url}`);
-            const res = await axios.get(url, { timeout: 5000 });
+        const config = {
+            timeout: 15000, // Aumentato a 15 secondi per dare tempo al trasporto di attivarsi
+            headers: { 
+                "api_password": PASSWORD,
+                "API_PASSWORD": PASSWORD 
+            }
+        };
+
+        // Proviamo la rotta ufficiale completa
+        const searchUrl = `${PROXY_URL}/anime/gogoanime/${encodeURIComponent(title)}?API_PASSWORD=${PASSWORD}`;
+        const res = await axios.get(searchUrl, config);
+
+        if (res.data && res.data.results && res.data.results.length > 0) {
+            const anime = res.data.results[0];
+            console.log(`✅ PROXY SBLOCCATO! Trovato: ${anime.title}`);
+
+            const infoUrl = `${PROXY_URL}/anime/gogoanime/info/${anime.id}?API_PASSWORD=${PASSWORD}`;
+            const infoRes = await axios.get(infoUrl, config);
+            const episodes = infoRes.data.episodes || [];
+            if (episodes.length === 0) return [];
+
+            const lastEp = episodes[episodes.length - 1];
             
-            // Se risponde con dei risultati, abbiamo trovato la rotta!
-            if (res.data && (res.data.results || Array.isArray(res.data))) {
-                const results = res.data.results || res.data;
-                if (results.length > 0) {
-                    console.log(`✅ TROVATO! La rotta giusta è: ${url}`);
-                    const anime = results[0];
+            const watchUrl = `${PROXY_URL}/anime/gogoanime/watch/${lastEp.id}?API_PASSWORD=${PASSWORD}`;
+            const watchRes = await axios.get(watchUrl, config);
 
-                    // Cerchiamo di prendere gli episodi (spesso l'ID è sufficiente)
-                    const infoUrl = url.replace(encodeURIComponent(title), `info/${anime.id}`);
-                    const info = await axios.get(infoUrl);
-                    const episodes = info.data.episodes || [];
-
-                    if (episodes.length > 0) {
-                        const lastEp = episodes[episodes.length - 1];
-                        const watchUrl = url.replace(encodeURIComponent(title), `watch/${lastEp.id}`);
-                        const watch = await axios.get(watchUrl);
-
-                        return (watch.data.sources || []).map(s => ({
-                            name: "Anikai Private 🪐",
-                            title: `${s.quality} - ${anime.title}`,
-                            url: s.url
-                        }));
+            return (watchRes.data.sources || []).map(s => ({
+                name: "Anikai Private 🪐",
+                title: `${s.quality} - Ep.${lastEp.number}\n${anime.title}`,
+                url: s.url,
+                behaviorHints: {
+                    proxyHeaders: {
+                        "Referer": "https://gogoanime.bid/",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
                     }
                 }
-            }
-        } catch (e) {
-            console.log(`❌ Fallito: ${url.split('/').pop()} - Errore: ${e.message}`);
+            }));
         }
+    } catch (e) {
+        console.log(`❌ Stato errore: ${e.response ? e.response.status : 'Timeout/Network'}`);
+        console.log(`Messaggio: ${e.message}`);
     }
-    
-    // Se tutto fallisce, usiamo un link esterno così almeno puoi vedere l'anime
-    console.log("Il proxy non risponde a nessuna rotta nota. Uso link di backup.");
-    return [{
-        name: "Anikai Backup 🚀",
-        title: `Clicca qui se il proxy fallisce\n${title}`,
-        externalUrl: `https://www.2embed.cc/embed/anime/${encodeURIComponent(title)}`
-    }];
+    return [];
 }
 
 module.exports = { getStreams };
