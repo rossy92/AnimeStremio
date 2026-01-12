@@ -2,44 +2,57 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log(`[Anikai] Ricerca flusso video diretto per: ${title}`);
+        console.log(`[Anikai] Ricerca Global (EN) per: ${title}`);
         
-        // Usiamo un'istanza di backup che risponde ai file video diretti
-        const searchUrl = `https://api.consumet.org/anime/gogoanime/${encodeURIComponent(title)}`;
-        const searchRes = await axios.get(searchUrl, { timeout: 8000 });
-        const anime = searchRes.data.results?.[0];
+        // Pulizia del titolo per il database internazionale
+        const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+        
+        // Usiamo un'istanza di Consumet per Gogoanime
+        const searchUrl = `https://api.consumet.org/anime/gogoanime/${encodeURIComponent(cleanTitle)}`;
+        const res = await axios.get(searchUrl, { timeout: 10000 });
+        const results = res.data.results || [];
 
-        if (anime) {
-            console.log(`✅ Trovato ID: ${anime.id}`);
-            
-            // 1. Prendiamo l'ID dell'episodio 1 (per testare)
+        if (results.length > 0) {
+            const anime = results[0];
+            console.log(`✅ Trovato su Global DB: ${anime.title}`);
+
+            // Otteniamo le info dell'anime per avere la lista episodi
             const infoRes = await axios.get(`https://api.consumet.org/anime/gogoanime/info/${anime.id}`);
-            const firstEp = infoRes.data.episodes?.[0];
+            const episodes = infoRes.data.episodes || [];
 
-            if (firstEp) {
-                // 2. Prendiamo il link del file .m3u8 (il formato che Stremio digerisce)
-                const watchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/watch/${firstEp.id}`);
-                const source = watchRes.data.sources?.find(s => s.quality === 'default' || s.quality === 'backup') || watchRes.data.sources?.[0];
-
-                if (source && source.url) {
-                    console.log(`🚀 Flusso video trovato! Inviando a Stremio...`);
-                    return [{
-                        name: "Anikai Cinema 🪐",
-                        title: `Riproduzione Diretta - Ep. 1\n${anime.title}`,
-                        url: source.url, // Questo è un link .m3u8, ora Stremio lo DEVE leggere
-                        behaviorHints: {
-                            notInterchangeable: true,
-                            proxyHeaders: { 
-                                "Referer": "https://gogoanime.bid/",
-                                "User-Agent": "Mozilla/5.0" 
-                            }
-                        }
-                    }];
-                }
+            if (episodes.length === 0) {
+                console.log("❌ Nessun episodio trovato.");
+                return [];
             }
+
+            // Prendiamo il primo episodio per test
+            const ep = episodes[0]; 
+            console.log(`[Anikai] Recupero link video per episodio ${ep.number}`);
+
+            // Otteniamo il link video REALE (.m3u8)
+            const watchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/watch/${ep.id}`);
+            const sources = watchRes.data.sources || [];
+
+            if (sources.length === 0) {
+                console.log("❌ Nessuna sorgente video trovata.");
+                return [];
+            }
+
+            console.log(`🚀 Invio ${sources.length} link a Stremio`);
+            return sources.map(s => ({
+                name: "Anikai Global 🪐",
+                title: `${s.quality} - Episode ${ep.number}\n${anime.title}`,
+                url: s.url,
+                behaviorHints: {
+                    proxyHeaders: { "Referer": "https://gogoanime.bid/" },
+                    notInterchangeable: true
+                }
+            }));
+        } else {
+            console.log("❌ Nessun risultato nel database inglese.");
         }
     } catch (e) {
-        console.log(`❌ Errore durante il recupero: ${e.message}`);
+        console.log(`❌ Errore connessione: ${e.message}`);
     }
     return [];
 }
