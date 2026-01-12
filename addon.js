@@ -15,8 +15,8 @@ builder.defineStreamHandler((args) => {
     return Promise.resolve({
         streams: [
             {
-                name: "Addon Test",
-                title: "Connessione Riuscita!",
+                name: "Test",
+                title: "Server Connesso!",
                 url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             }
         ]
