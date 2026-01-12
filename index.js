@@ -1,30 +1,42 @@
-const { addonBuilder } = require("stremio-addon-sdk");
+const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
+const axios = require("axios");
 const anikai = require("./providers/anikai");
 
 const builder = new addonBuilder({
-    id: "org.anikai.ita",
+    id: "org.anikai.plus",
     name: "Anikai Plus",
     version: "1.0.0",
-    description: "Anime ITA/ENG da AnimeWorld e fonti Global",
+    description: "AnimeWorld + Global Sources",
     resources: ["stream"],
     types: ["anime", "movie", "series"],
     catalogs: []
 });
 
+// Funzione per convertire ID Kitsu in Titolo Reale
+async function getTitleFromId(id) {
+    try {
+        if (id.startsWith("kitsu:")) {
+            const kitsuId = id.split(":")[1];
+            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`);
+            return res.data.data.attributes.canonicalTitle;
+        }
+        return id; // Fallback se non è un ID Kitsu
+    } catch (e) {
+        return id;
+    }
+}
+
 builder.defineStreamHandler(async (args) => {
-    // Cerchiamo il titolo tramite l'ID (Stremio passa metadati, dobbiamo estrarre il nome)
-    // Per ora, per test, usiamo un titolo fisso o proviamo a intercettare il nome se disponibile
-    const title = args.id; // Nota: Qui andrebbe una logica per convertire ID in Titolo, ma iniziamo a vedere se i link appaiono
+    console.log(`--- Richiesta Stream per ID: ${args.id} ---`);
     
-    console.log(`--- Ricerca in corso per ID: ${args.id} ---`);
+    // 1. Otteniamo il nome dell'anime dall'ID
+    const title = await getTitleFromId(args.id);
+    console.log(`Titolo identificato: ${title}`);
+
+    // 2. Chiediamo i link al provider
     const streams = await anikai.getStreams(title);
     
     return { streams: streams };
 });
 
-const addonInterface = builder.getInterface();
-module.exports = addonInterface;
-
-// Per farlo girare su Koyeb (Server HTTP)
-const { serveHTTP } = require("stremio-addon-sdk");
-serveHTTP(addonInterface, { port: process.env.PORT || 7000 });
+serveHTTP(builder.getInterface(), { port: process.env.PORT || 7000 });
