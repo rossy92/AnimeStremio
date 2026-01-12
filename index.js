@@ -1,5 +1,4 @@
-const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
-const axios = require("axios");
+const http = require("http");
 const anikai = require("./providers/anikai");
 const gogoanime = require("./providers/gogoanime");
 
@@ -13,49 +12,34 @@ const manifest = {
     idPrefixes: ["kitsu", "tt"]
 };
 
-const builder = new addonBuilder(manifest);
+const server = http.createServer(async (req, res) => {
+    // Gestione CORS (per far parlare Stremio con il server)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Content-Type', 'application/json');
 
-async function getTitleFromId(id) {
-    try {
-        if (id.startsWith("kitsu:")) {
-            const kitsuId = id.split(":")[1];
-            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 3000 });
-            return res.data.data.attributes.canonicalTitle;
+    if (req.url === "/manifest.json") {
+        res.end(JSON.stringify(manifest));
+    } else if (req.url.includes("/stream/")) {
+        const parts = req.url.split("/");
+        const id = parts[parts.length - 1].replace(".json", "");
+        
+        console.log("Richiesta per ID:", id);
+        
+        try {
+            // Cerchiamo solo su Anikai per ora per testare la stabilità
+            const streams = await anikai.getStreams("Death Note");
+            res.end(JSON.stringify({ streams: streams || [] }));
+        } catch (e) {
+            res.end(JSON.stringify({ streams: [] }));
         }
-        if (id.startsWith("tt")) {
-            const imdbId = id.split(":")[0];
-            const res = await axios.get(`https://v3-cinemeta.strem.io/meta/series/${imdbId}.json`, { timeout: 3000 });
-            return res.data.meta.name;
-        }
-    } catch (e) {
-        return null;
-    }
-    return null;
-}
-
-builder.defineStreamHandler(async (args) => {
-    const title = await getTitleFromId(args.id);
-    if (!title) return { streams: [] };
-
-    console.log(`--- Ricerca per: ${title} ---`);
-
-    try {
-        const [ita, eng] = await Promise.allSettled([
-            anikai.getStreams(title),
-            gogoanime.getStreams(title)
-        ]);
-
-        const streams = [];
-        if (ita.status === "fulfilled" && Array.isArray(ita.value)) streams.push(...ita.value);
-        if (eng.status === "fulfilled" && Array.isArray(eng.value)) streams.push(...eng.value);
-
-        return { streams: streams };
-    } catch (e) {
-        console.log("Errore stream handler:", e.message);
-        return { streams: [] };
+    } else {
+        res.end(JSON.stringify({ message: "Anikai Addon Online" }));
     }
 });
 
-const addonInterface = builder.getInterface();
-// CONFIGURATA PORTA 8000 PER KOYEB
-serveHTTP(addonInterface, { port: process.env.PORT || 8000 });
+// Porta 8000 per Koyeb
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => {
+    console.log(`Server attivo sulla porta ${PORT}`);
+});
