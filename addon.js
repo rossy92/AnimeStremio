@@ -4,3 +4,4 @@ const manifest = {
     name: "AnimeStremio",
     // ... il resto del tuo manifest
 };
+module.exports = builder.getInterface();
