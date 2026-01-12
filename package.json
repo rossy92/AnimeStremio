@@ -1,15 +1,14 @@
 {
-  "name": "stremio-anime-mega-pack",
+  "name": "stremio-anime-ita",
   "version": "1.0.0",
-  "description": "Addon multilingua per anime",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "stremio-addon-sdk": "^3.0.0",
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "@consumet/extensions": "^1.5.0"
+    "stremio-addon-sdk": "3.0.27",
+    "axios": "1.6.2",
+    "cheerio": "1.0.0-rc.12",
+    "@consumet/extensions": "1.5.0"
   }
 }
