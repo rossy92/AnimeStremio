@@ -5,50 +5,46 @@ const PASSWORD = "4Str3m10";
 
 async function getStreams(title) {
     try {
-        console.log(`[Anikai] Tentativo finale su proxy con password: ${title}`);
+        console.log(`[Anikai] Test Rotta Diretta per: ${title}`);
 
         const config = {
-            timeout: 15000, // Aumentato a 15 secondi per dare tempo al trasporto di attivarsi
-            headers: { 
-                "api_password": PASSWORD,
-                "API_PASSWORD": PASSWORD 
-            }
+            timeout: 10000,
+            headers: { "API_PASSWORD": PASSWORD }
         };
 
-        // Proviamo la rotta ufficiale completa
-        const searchUrl = `${PROXY_URL}/anime/gogoanime/${encodeURIComponent(title)}?API_PASSWORD=${PASSWORD}`;
+        // 1. Proviamo la rotta abbreviata (senza /anime/)
+        const searchUrl = `${PROXY_URL}/gogoanime/${encodeURIComponent(title)}?API_PASSWORD=${PASSWORD}`;
         const res = await axios.get(searchUrl, config);
 
         if (res.data && res.data.results && res.data.results.length > 0) {
             const anime = res.data.results[0];
-            console.log(`✅ PROXY SBLOCCATO! Trovato: ${anime.title}`);
+            console.log(`✅ TROVATO! ID: ${anime.id}`);
 
-            const infoUrl = `${PROXY_URL}/anime/gogoanime/info/${anime.id}?API_PASSWORD=${PASSWORD}`;
+            // 2. Info (Senza /anime/)
+            const infoUrl = `${PROXY_URL}/gogoanime/info/${anime.id}?API_PASSWORD=${PASSWORD}`;
             const infoRes = await axios.get(infoUrl, config);
             const episodes = infoRes.data.episodes || [];
             if (episodes.length === 0) return [];
 
             const lastEp = episodes[episodes.length - 1];
             
-            const watchUrl = `${PROXY_URL}/anime/gogoanime/watch/${lastEp.id}?API_PASSWORD=${PASSWORD}`;
+            // 3. Watch (Senza /anime/)
+            const watchUrl = `${PROXY_URL}/gogoanime/watch/${lastEp.id}?API_PASSWORD=${PASSWORD}`;
             const watchRes = await axios.get(watchUrl, config);
 
             return (watchRes.data.sources || []).map(s => ({
                 name: "Anikai Private 🪐",
-                title: `${s.quality} - Ep.${lastEp.number}\n${anime.title}`,
+                title: `${s.quality} - ${anime.title}\nEp. ${lastEp.number}`,
                 url: s.url,
                 behaviorHints: {
-                    proxyHeaders: {
-                        "Referer": "https://gogoanime.bid/",
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-                    }
+                    proxyHeaders: { "Referer": "https://gogoanime.bid/" }
                 }
             }));
         }
     } catch (e) {
-        console.log(`❌ Stato errore: ${e.response ? e.response.status : 'Timeout/Network'}`);
-        console.log(`Messaggio: ${e.message}`);
+        console.log(`❌ Ancora 404 sulla rotta diretta.`);
     }
+
     return [];
 }
 
