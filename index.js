@@ -16,12 +16,14 @@ const builder = new addonBuilder({
 async function getTitleFromId(id) {
     try {
         if (id.startsWith("kitsu:")) {
+            // Rimuove l'ID dell'episodio se presente (es: kitsu:1376:1 -> 1376)
             const kitsuId = id.split(":")[1];
             const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`);
             return res.data.data.attributes.canonicalTitle;
         }
-        return id; // Fallback se non è un ID Kitsu
+        return id;
     } catch (e) {
+        console.log("Errore recupero titolo:", e.message);
         return id;
     }
 }
