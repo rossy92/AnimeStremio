@@ -1,5 +1,5 @@
 const { addonBuilder } = require("stremio-addon-sdk");
-const animeworld = require("./providers/animeworld");
+const animesaturn = require("./providers/animesaturn");
 const axios = require("axios");
 
 const manifest = {
@@ -46,10 +46,16 @@ builder.defineStreamHandler(async (args) => {
     console.log("Titolo individuato:", searchTitle);
 
     try {
-        const streams = await animeworld.getStreams(searchTitle);
-        if (streams && streams.length > 0) return { streams };
+        // Cerchiamo su entrambi
+        const [awResults, saturnResults] = await Promise.all([
+            animeworld.getStreams(searchTitle),
+            animesaturn.getStreams(searchTitle)
+        ]);
+        
+        const allStreams = [...awResults, ...saturnResults];
+        if (allStreams.length > 0) return { streams: allStreams };
     } catch (err) {
-        console.error(err);
+        console.error("Errore:", err);
     }
 
     return { 
