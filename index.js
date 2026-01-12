@@ -3,58 +3,42 @@ const axios = require("axios");
 const hianime = require("./providers/hianime");
 
 const manifest = {
-    id: "com.anikai.plus.global",
-    name: "Anikai Plus ENG",
-    version: "1.1.0",
-    description: "Anime in Inglese (Sub/Dub) - Alta Qualità",
+    id: "com.anikai.plus.vidsrc",
+    name: "Anikai Plus (Direct)",
+    version: "2.1.0",
+    description: "Streaming Direct (No Torrent)",
     resources: ["stream"],
-    types: ["anime", "series", "movie"],
+    types: ["anime", "series"],
     idPrefixes: ["kitsu", "tt"]
 };
 
-async function getTitleFromId(id) {
-    try {
-        if (id.startsWith("kitsu:")) {
-            const kitsuId = id.split(":")[1];
-            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 3000 });
-            return res.data.data.attributes.canonicalTitle;
-        }
-        if (id.startsWith("tt")) {
-            const imdbId = id.split(":")[0];
-            const res = await axios.get(`https://v3-cinemeta.strem.io/meta/series/${imdbId}.json`, { timeout: 3000 });
-            return res.data.meta.name;
-        }
-    } catch (e) { return null; }
-}
-
 const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Type', 'application/json');
 
     if (req.url === "/manifest.json" || req.url === "/") {
-        res.end(JSON.stringify(manifest));
-    } 
-    else if (req.url.includes("/stream/")) {
-        const parts = req.url.split("/");
-        const id = decodeURIComponent(parts[parts.length - 1].replace(".json", ""));
-        
-        // Estraiamo l'episodio dall'ID (es: kitsu:11:5 -> episodio 5)
-        const idParts = id.split(":");
-        const episode = idParts.length > 2 ? idParts[2] : "1";
-        
-        const title = await getTitleFromId(id);
-        console.log(`[Server] Ricerca: ${title} - Ep: ${episode}`);
+        return res.end(JSON.stringify(manifest));
+    }
 
-        if (!title) return res.end(JSON.stringify({ streams: [] }));
-
+    if (req.url.includes("/stream/")) {
         try {
-            // Passiamo sia il titolo che l'episodio al provider
+            const parts = req.url.split("/");
+            const id = decodeURIComponent(parts[parts.length - 1].replace(".json", ""));
+            const idParts = id.split(":");
+            const episode = idParts[2] || "1";
+
+            // Recupero titolo da Kitsu
+            const kitsuId = idParts[1];
+            const kitsuRes = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`);
+            const title = kitsuRes.data.data.attributes.canonicalTitle;
+
             const streams = await hianime.getStreams(title, episode);
             res.end(JSON.stringify({ streams: streams || [] }));
         } catch (e) {
             res.end(JSON.stringify({ streams: [] }));
         }
+    } else {
+        res.end(JSON.stringify({ status: "online" }));
     }
 });
 
