@@ -35,15 +35,10 @@ async function getStreams(title) {
         if (!epLink) return [];
 
         // 3. Creiamo il link per Stremio
-        // Usiamo un trucco: passiamo il link della pagina dell'episodio
-        // Se l'addon è configurato bene, Stremio proverà ad aprirlo.
         return [{
             name: "Anikai ITA 🇮🇹",
-            title: `AnimeWorld - Ep. ${epNum}\n${title}`,
-            externalUrl: `${AW_DOMAIN}${epLink}`, // Usiamo externalUrl per sicurezza inizialmente
-            behaviorHints: {
-                notInterchangeable: true
-            }
+            title: `Apri su AnimeWorld - Ep. ${epNum}\n${title}`,
+            externalUrl: `${AW_DOMAIN}${epLink}`, // Usiamo externalUrl invece di url
         }];
 
     } catch (e) {
