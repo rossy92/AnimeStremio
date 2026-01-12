@@ -2,42 +2,37 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca su Anikai per:", title);
+        console.log("Ricerca multi-provider per:", title);
         
-        // 1. Cerchiamo l'ID dell'anime su Anikai (esempio tramite API pubblica)
-        const searchUrl = `https://api.anikai.com/v1/anime/search?q=${encodeURIComponent(title)}`;
-        const searchRes = await axios.get(searchUrl, { timeout: 5000 });
+        // Usiamo un'istanza pubblica di Consumet che aggrega Anikai, Gogo e altri
+        const searchUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/${encodeURIComponent(title)}`;
+        const { data: searchData } = await axios.get(searchUrl, { timeout: 8000 });
 
-        if (!searchRes.data || searchRes.data.length === 0) {
-            console.log("Anikai: Nessun risultato trovato.");
-            return [];
-        }
+        if (!searchData.results || searchData.results.length === 0) return [];
 
-        // Prendiamo il primo risultato (il più pertinente)
-        const anime = searchRes.data[0];
-        const animeId = anime.id;
+        // Prendiamo il primo anime trovato e recuperiamo gli episodi
+        const animeId = searchData.results[0].id;
+        const infoUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/info/${animeId}`;
+        const { data: infoData } = await axios.get(infoUrl);
 
-        // 2. Recuperiamo gli episodi o i link diretti
-        const infoUrl = `https://api.anikai.com/v1/anime/${animeId}/episodes`;
-        const infoRes = await axios.get(infoUrl);
+        if (!infoData.episodes || infoData.episodes.length === 0) return [];
 
-        if (!infoRes.data || infoRes.data.length === 0) return [];
+        // Prendiamo i link dell'episodio 1 (per test rapido)
+        const episodeId = infoData.episodes[0].id;
+        const watchUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/watch/${episodeId}`;
+        const { data: streamData } = await axios.get(watchUrl);
 
-        // Prendiamo l'ultimo episodio come esempio di test
-        const lastEpisode = infoRes.data[infoRes.data.length - 1];
-        
-        // 3. Restituiamo l'array di stream per Stremio
-        return [{
-            name: "Anikai 🪐",
-            title: `ENG - ${anime.title.romaji || title}\nEpisodio ${lastEpisode.number}`,
-            url: lastEpisode.videoUrl // Il link diretto al file video
-        }];
+        // Trasformiamo i sorgenti video in link per Stremio
+        return streamData.sources.map(s => ({
+            name: "Anikai/Multi 🪐",
+            title: `ENG - ${s.quality}\n${infoData.title}`,
+            url: s.url
+        }));
 
     } catch (e) {
-        console.log("Errore interno Anikai:", e.message);
+        console.log("Errore Provider:", e.message);
         return [];
     }
 }
 
-// Esportiamo la funzione così addon.js può vederla
 module.exports = { getStreams };
