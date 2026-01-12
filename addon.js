@@ -9,9 +9,11 @@ const manifest = {
     id: "org.animestremio.ita",
     version: "2.2.0",
     name: "AnimeStremio ITA",
+    description: "Ricerca Multi-Sito",
     resources: ["stream"],
     types: ["anime", "series", "movie"],
-    idPrefixes: ["tt", "kitsu"]
+    idPrefixes: ["tt", "kitsu"],
+    catalogs: [] // Deve essere esattamente così
 };
 
 const builder = new addonBuilder(manifest);
