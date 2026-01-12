@@ -38,13 +38,19 @@ const server = http.createServer(async (req, res) => {
     else if (req.url.includes("/stream/")) {
         const parts = req.url.split("/");
         const id = decodeURIComponent(parts[parts.length - 1].replace(".json", ""));
+        
+        // Estraiamo l'episodio dall'ID (es: kitsu:11:5 -> episodio 5)
+        const idParts = id.split(":");
+        const episode = idParts.length > 2 ? idParts[2] : "1";
+        
         const title = await getTitleFromId(id);
+        console.log(`[Server] Ricerca: ${title} - Ep: ${episode}`);
 
         if (!title) return res.end(JSON.stringify({ streams: [] }));
 
         try {
-            // Cerchiamo solo sui provider Inglesi
-            const streams = await hianime.getStreams(title);
+            // Passiamo sia il titolo che l'episodio al provider
+            const streams = await hianime.getStreams(title, episode);
             res.end(JSON.stringify({ streams: streams || [] }));
         } catch (e) {
             res.end(JSON.stringify({ streams: [] }));
