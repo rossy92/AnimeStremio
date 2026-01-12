@@ -2,8 +2,9 @@ const { addonBuilder } = require("stremio-addon-sdk");
 
 const manifest = {
     id: "org.animestremio.ita",
-    version: "1.0.0",
+    version: "1.0.1", // Ho cambiato versione per forzare l'aggiornamento
     name: "AnimeStremio",
+    description: "Addon Test",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"]
@@ -12,13 +13,14 @@ const manifest = {
 const builder = new addonBuilder(manifest);
 
 builder.defineStreamHandler((args) => {
-    console.log("Richiesta per:", args.id);
+    console.log("Richiesta ricevuta per:", args.id);
+
     return Promise.resolve({
         streams: [
             {
-                name: "AnimeStremio",
-                title: "DEBUG: Server Connesso!",
-                url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                name: "✅ FUNZIONA",
+                title: "Server OK - Clicca qui",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             }
         ]
     });
