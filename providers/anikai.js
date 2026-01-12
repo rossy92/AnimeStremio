@@ -34,11 +34,17 @@ async function getStreams(title) {
 
         if (!epLink) return [];
 
-        // 3. Creiamo il link per Stremio
+        // 3. Creiamo il link per Stremio (Formato Compatibile)
         return [{
             name: "Anikai ITA 🇮🇹",
-            title: `Apri su AnimeWorld - Ep. ${epNum}\n${title}`,
-            externalUrl: `${AW_DOMAIN}${epLink}`, // Usiamo externalUrl invece di url
+            title: `Guarda: ${title}\nEpisodio trovato su AnimeWorld`,
+            url: `${AW_DOMAIN}${epLink}`, // Proviamo a passarlo come URL diretto
+            behaviorHints: {
+                notInterchangeable: true,
+                proxyHeaders: {
+                    "Referer": "https://www.animeworld.so/"
+                }
+            }
         }];
 
     } catch (e) {
