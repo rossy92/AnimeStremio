@@ -2,38 +2,37 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca globale per:", title);
+        console.log("Ricerca link diretto per:", title);
         
-        // 1. Cerchiamo l'ID corretto su MyAnimeList (Jikan API - Sempre online)
-        const searchRes = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { timeout: 5000 });
+        // Usiamo un'istanza di test che di solito è molto permissiva
+        const searchUrl = `https://api.consumet.org/anime/gogoanime/${encodeURIComponent(title)}`;
+        const searchRes = await axios.get(searchUrl);
         
-        if (!searchRes.data.data || searchRes.data.data.length === 0) {
-            console.log("Nessun anime trovato su database globale.");
-            return [];
-        }
+        if (!searchRes.data.results || searchRes.data.results.length === 0) return [];
 
-        const anime = searchRes.data.data[0];
-        const animeTitle = anime.title;
-        const animeId = anime.mal_id;
+        const animeId = searchRes.data.results[0].id;
 
-        console.log(`Anime confermato: ${animeTitle} (ID: ${animeId})`);
+        // Prendiamo l'episodio 1
+        const infoRes = await axios.get(`https://api.consumet.org/anime/gogoanime/info/${animeId}`);
+        if (!infoRes.data.episodes || infoRes.data.episodes.length === 0) return [];
+        
+        const epId = infoRes.data.episodes[0].id;
 
-        // 2. Restituiamo un link generato per un player multi-sorgente
-        // Questo tipo di link apre un player che cerca automaticamente i flussi migliori
-        return [{
-            name: "Anikai MULTI 🚀",
-            title: `ENG - Multi Quality\n${animeTitle}`,
-            url: `https://shaka-player.vercel.app/?url=https://api.consumet.org/anime/gogoanime/watch/${anime.title.toLowerCase().replace(/\s+/g, '-')}-episode-1`,
-            isM3U8: true
-        },
-        {
-            name: "Anikai Mirror 🪐",
-            title: `ENG - Backup Stream\n${animeTitle}`,
-            url: `https://www.2embed.cc/embed/anime/${animeId}/1/1` // Sistema di backup basato su ID
-        }];
+        // Qui sta il trucco: chiediamo il link "diretto"
+        const watchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/watch/${epId}`);
+        
+        // Filtriamo solo i link che Stremio può digerire (m3u8 o mp4)
+        const streams = watchRes.data.sources.map(s => ({
+            name: "Anikai 🪐",
+            title: `ENG - ${s.quality}`,
+            url: s.url, // Questo deve essere un link che finisce per .m3u8
+            tag: [s.quality]
+        }));
+
+        return streams;
 
     } catch (e) {
-        console.log("Errore Ricerca Globale:", e.message);
+        console.log("Errore link diretto:", e.message);
         return [];
     }
 }
