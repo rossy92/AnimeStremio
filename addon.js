@@ -1,12 +1,12 @@
 const { addonBuilder } = require("stremio-addon-sdk");
-// Importiamo dal tuo file nella cartella providers
-const { getAnikaiStreams } = require("./providers/anikai");
+// Carichiamo il file con il nome corretto
+const providers = require("./providers/italiani"); 
 
 const manifest = {
     id: "org.animestremio.ita",
-    version: "1.5.0",
+    version: "1.7.5",
     name: "AnimeStremio ITA",
-    description: "Fonti: AniKai",
+    description: "Fonti: AnimeWorld & Saturn",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"],
@@ -19,30 +19,39 @@ builder.defineStreamHandler(async (args) => {
     console.log("Richiesta per ID:", args.id);
 
     try {
-        // Per ora facciamo un test cercando "One Piece" 
-        // così vediamo se il tuo file anikai.js estrae correttamente i link
-        const anikaiLinks = await getAnikaiStreams("One Piece");
+        const testTitle = "One Piece";
+        let allStreams = [];
 
-        if (anikaiLinks && anikaiLinks.length > 0) {
-            return { streams: anikaiLinks };
+        // 1. Proviamo AnimeWorld
+        if (typeof providers.getAnimeWorldStreams === "function") {
+            const aw = await providers.getAnimeWorldStreams(testTitle).catch(() => []);
+            allStreams = allStreams.concat(aw);
+        } else {
+            console.log("Funzione getAnimeWorldStreams non trovata in italiani.js");
+        }
+
+        // 2. Proviamo AnimeSaturn
+        if (typeof providers.getAnimeSaturnStreams === "function") {
+            const saturn = await providers.getAnimeSaturnStreams(testTitle).catch(() => []);
+            allStreams = allStreams.concat(saturn);
+        } else {
+            console.log("Funzione getAnimeSaturnStreams non trovata in italiani.js");
+        }
+
+        if (allStreams.length > 0) {
+            return { streams: allStreams };
         } else {
             return { 
                 streams: [{ 
-                    name: "AniKai", 
-                    title: "Nessun link trovato (Test One Piece)", 
+                    name: "Info", 
+                    title: "Nessun link trovato in italiani.js (Test One Piece)", 
                     url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
                 }] 
             };
         }
     } catch (error) {
-        console.error("Errore nel provider:", error);
-        return { 
-            streams: [{ 
-                name: "Errore", 
-                title: "Errore durante la ricerca", 
-                url: "" 
-            }] 
-        };
+        console.error("Errore critico nell'addon:", error);
+        return { streams: [] };
     }
 });
 
