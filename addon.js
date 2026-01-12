@@ -2,12 +2,13 @@ const { addonBuilder } = require("stremio-addon-sdk");
 
 const manifest = {
     id: "org.animestremio.ita",
-    version: "1.0.1", // Ho cambiato versione per forzare l'aggiornamento
+    version: "1.0.2",
     name: "AnimeStremio",
     description: "Addon Test",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
-    idPrefixes: ["tt", "kitsu"]
+    idPrefixes: ["tt", "kitsu"],
+    catalogs: [] // <--- Questa riga mancava e causava l'errore!
 };
 
 const builder = new addonBuilder(manifest);
