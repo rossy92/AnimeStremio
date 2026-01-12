@@ -1,19 +1,22 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 const axios = require("axios");
 
-// Importiamo i provider
-const animeworld = require("./providers/animeworld");
-const animesaturn = require("./providers/animesaturn");
+// PROVIDER DISATTIVATI (Puoi riattivarli togliendo // se serviranno)
+// const animeworld = require("./providers/animeworld");
+// const animesaturn = require("./providers/animesaturn");
+
+// QUI AGGIUNGEREMO I TUOI PROVIDER INGLESI
+// const providerInglese = require("./providers/tuo-file-inglese");
 
 const manifest = {
     id: "org.animestremio.ita",
     version: "2.2.0",
-    name: "AnimeStremio ITA",
-    description: "Ricerca Multi-Sito",
+    name: "AnimeStremio MULTI",
+    description: "Ricerca Multi-Sito (ITA/ENG)",
     resources: ["stream"],
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"],
-    catalogs: [] // Deve essere esattamente così
+    catalogs: [] 
 };
 
 const builder = new addonBuilder(manifest);
@@ -44,25 +47,24 @@ builder.defineStreamHandler(async (args) => {
 
     if (!searchTitle) return { streams: [] };
 
-    console.log("Ricerca per:", searchTitle);
+    console.log("--- Nuova Ricerca ---");
+    console.log("Titolo:", searchTitle);
 
-    // Eseguiamo le ricerche
     let allStreams = [];
+
     try {
-        const aw = await animeworld.getStreams(searchTitle).catch(() => []);
-        const sat = await animesaturn.getStreams(searchTitle).catch(() => []);
-        allStreams = [...aw, ...sat];
-    } catch (e) { console.log("Errore ricerca:", e.message); }
+        // Al momento non esegue ricerche perché i provider sono commentati.
+        // Esempio futuro:
+        // const engResults = await providerInglese.getStreams(searchTitle).catch(() => []);
+        // allStreams = [...engResults];
+    } catch (e) { 
+        console.log("Errore ricerca:", e.message); 
+    }
 
     if (allStreams.length > 0) return { streams: allStreams };
 
     return { 
         streams: [{ 
             name: "Info", 
-            title: `Nessun risultato per: ${searchTitle}`, 
-            url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
-        }] 
-    };
-});
-
-module.exports = builder.getInterface();
+            title: `In attesa di provider validi per: ${searchTitle}`, 
+            url: "
