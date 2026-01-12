@@ -35,23 +35,26 @@ builder.defineStreamHandler(async (args) => {
     const searchTitle = await getNameFromId(args.id);
     if (!searchTitle) return { streams: [] };
 
-    console.log("Ricerca Anikai per:", searchTitle);
+    console.log("--- Ricerca in corso ---");
+    console.log("Titolo:", searchTitle);
 
     try {
-        // 2. CHIAMA ANIKAI
+        // QUESTA È LA RIGA GIUSTA:
         const streams = await anikai.getStreams(searchTitle);
         
         if (streams && streams.length > 0) {
+            console.log(`Trovati ${streams.length} link su Anikai`);
             return { streams: streams };
         }
     } catch (e) {
-        console.log("Errore durante la ricerca:", e.message);
+        console.log("Errore chiamata Anikai:", e.message);
     }
 
+    // Se non trova nulla, mostra questo:
     return { 
         streams: [{ 
             name: "Info", 
-            title: `Nessun link trovato su Anikai per: ${searchTitle}`, 
+            title: `Nessun link su Anikai per: ${searchTitle}`, 
             url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
         }] 
     };
