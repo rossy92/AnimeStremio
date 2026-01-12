@@ -2,32 +2,34 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca su Mirror Secondario per:", title);
+        console.log("Tentativo con Mirror C per:", title);
         
-        // Proviamo un'istanza diversa (ne usiamo una che di solito è meno affollata)
-        const baseUrl = "https://consumet-api-one.vercel.app/anime/gogoanime";
+        // Nuova istanza meno congestionata
+        const apiBase = "https://api-consumet-org-five.vercel.app/anime/gogoanime";
         
-        const searchRes = await axios.get(`${baseUrl}/${encodeURIComponent(title)}`, { timeout: 8000 });
+        // 1. Cerca l'anime
+        const searchRes = await axios.get(`${apiBase}/${encodeURIComponent(title)}`, { timeout: 10000 });
         const results = searchRes.data.results;
 
         if (!results || results.length === 0) {
-            console.log("Nessun risultato trovato sul Mirror Secondario.");
+            console.log("Nessun risultato su Mirror C.");
             return [];
         }
 
-        // Cerchiamo i link per il primo risultato
         const animeId = results[0].id;
-        console.log("ID Trovato:", animeId);
+        console.log("Anime trovato ID:", animeId);
 
-        const infoRes = await axios.get(`${baseUrl}/info/${animeId}`);
+        // 2. Prendi gli episodi
+        const infoRes = await axios.get(`${apiBase}/info/${animeId}`);
         const episodes = infoRes.data.episodes;
 
         if (!episodes || episodes.length === 0) return [];
 
-        // Prendiamo l'ultimo episodio (spesso è più facile da trovare rispetto al primo)
+        // Prendi l'ultimo episodio
         const epId = episodes[episodes.length - 1].id;
 
-        const watchRes = await axios.get(`${baseUrl}/watch/${epId}`);
+        // 3. Prendi i link video
+        const watchRes = await axios.get(`${apiBase}/watch/${epId}`);
         
         if (!watchRes.data || !watchRes.data.sources) return [];
 
@@ -39,7 +41,7 @@ async function getStreams(title) {
         }));
 
     } catch (e) {
-        console.log("Errore Mirror Secondario:", e.message);
+        console.log("Errore Mirror C:", e.message);
         return [];
     }
 }
