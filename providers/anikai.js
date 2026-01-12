@@ -2,32 +2,33 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log(`[Anikai] Generazione Link Universale per: ${title}`);
+        console.log(`[Anikai] Generazione Link Diretti per: ${title}`);
+        
+        // Pulizia titolo per il link
+        const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-        // Puliamo il titolo per i motori di ricerca
-        const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '-');
-
-        // Creiamo una lista di sorgenti "Direct Embed" 
-        // Queste non passano per API fragili, ma puntano a grandi aggregatori
-        const streams = [
+        return [
             {
-                name: "Anikai Multi 🪐",
-                title: `Streaming Multi-Lingua\n${title}`,
-                // Usiamo vidsrc.to o simili che sono i più stabili al mondo
-                url: `https://vidsrc.to/embed/anime/${cleanTitle}`
+                name: "Anikai Cinema 🪐",
+                title: `Premi qui per avviare\n${title} (Multi-Lingua)`,
+                // Usiamo l'ID di vidsrc che è lo standard più compatibile
+                url: `https://vidsrc.to/embed/anime/${slug}`,
+                behaviorHints: {
+                    notInterchangeable: true,
+                    proxyHeaders: { "Referer": "https://vidsrc.to/" }
+                }
             },
             {
-                name: "Anikai Server 2 🚀",
-                title: `Backup High Speed\n${title}`,
-                url: `https://vidsrc.me/embed/anime?last_episode=1&title=${encodeURIComponent(title)}`
+                name: "Anikai Mirror 🚀",
+                title: `Server Alternativo\n${title}`,
+                url: `https://vidsrc.me/embed/anime?title=${encodeURIComponent(title)}`,
+                behaviorHints: {
+                    notInterchangeable: true,
+                    proxyHeaders: { "Referer": "https://vidsrc.me/" }
+                }
             }
         ];
-
-        console.log(`✅ Link generati per ${title}.`);
-        return streams;
-
     } catch (e) {
-        console.log(`❌ Errore generazione: ${e.message}`);
         return [];
     }
 }
