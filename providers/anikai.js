@@ -2,45 +2,46 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca specifica per:", title);
+        console.log("Proviamo sorgente Zoro per:", title);
         
-        // Usiamo un'istanza che sembra più stabile in questo momento
-        const apiBase = "https://api.consumet.org/anime/gogoanime";
+        // Usiamo un'istanza di un altro aggregatore (Zoro/Aniwatch)
+        const baseUrl = "https://api.consumet.org/anime/zoro";
         
-        // Cerchiamo il titolo
-        const searchRes = await axios.get(`${apiBase}/${encodeURIComponent(title)}`, { timeout: 15000 });
+        const searchRes = await axios.get(`${baseUrl}/${encodeURIComponent(title)}`, { timeout: 10000 });
         const results = searchRes.data.results;
 
-        if (!results || results.length === 0) return [];
+        if (!results || results.length === 0) {
+            console.log("Zoro: Nessun risultato.");
+            return [];
+        }
 
-        // Filtro per Naruto: se cerchiamo Naruto, prendiamo esattamente l'ID "naruto"
-        // Questo evita che il server impazzisca tra mille film e spin-off
-        const animeId = title.toLowerCase() === 'naruto' ? 'naruto' : results[0].id;
+        const animeId = results[0].id;
+        console.log("ID Zoro trovato:", animeId);
 
-        console.log("ID selezionato per il recupero:", animeId);
-
-        // Prendi gli episodi
-        const infoRes = await axios.get(`${apiBase}/info/${animeId}`);
+        // Recuperiamo gli episodi
+        const infoRes = await axios.get(`${baseUrl}/info?id=${animeId}`);
         const episodes = infoRes.data.episodes;
 
         if (!episodes || episodes.length === 0) return [];
 
-        // Testiamo l'episodio 1 di Naruto (o l'ultimo per altri anime)
+        // Prendiamo il primo episodio
         const epId = episodes[0].id;
+        console.log("Recupero link per ep:", epId);
 
-        const watchRes = await axios.get(`${apiBase}/watch/${epId}`);
+        // Recuperiamo i link video
+        const watchRes = await axios.get(`${baseUrl}/watch?episodeId=${epId}`);
         
         if (!watchRes.data || !watchRes.data.sources) return [];
 
         return watchRes.data.sources.map(s => ({
-            name: "Anikai 🪐",
-            title: `ENG - ${s.quality}\n${animeId.toUpperCase()}`,
+            name: "Anikai Z-Mirror 🪐",
+            title: `ENG - ${s.quality}`,
             url: s.url,
-            isM3U8: s.url.includes(".m3u8")
+            isM3U8: true
         }));
 
     } catch (e) {
-        console.log("Errore durante il test:", e.message);
+        console.log("Errore Sorgente Zoro:", e.message);
         return [];
     }
 }
