@@ -41,7 +41,7 @@ builder.defineStreamHandler(async (args) => {
 
     const realTitle = await getNameFromId(args.id);
     // Se non troviamo il titolo, proviamo a pulire l'ID come ultima spiaggia
-    const searchTitle = realTitle || args.id.split(':')[0];
+    const searchTitle = realTitle || "";
 
     console.log("Titolo individuato:", searchTitle);
 
