@@ -2,39 +2,39 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca su Sorgente Alternativa (Bypass) per:", title);
+        console.log("Ricerca Anikai per:", title);
         
-        // Usiamo un'istanza diversa che spesso rimane attiva quando le altre cadono
-        const searchUrl = `https://anime-api.xyz/api/gogoanime/search?query=${encodeURIComponent(title)}`;
-        const { data } = await axios.get(searchUrl, { timeout: 8000 });
+        // Usiamo un endpoint di ricerca alternativo e più stabile
+        const searchUrl = `https://api.consumet.org/anime/gogoanime/${encodeURIComponent(title)}`;
+        const response = await axios.get(searchUrl, { timeout: 10000 });
 
-        if (!data || !data.results || data.results.length === 0) {
-            console.log("Nessun risultato sulla sorgente alternativa.");
+        const results = response.data.results;
+        if (!results || results.length === 0) {
+            console.log("Nessun risultato trovato.");
             return [];
         }
 
-        const anime = data.results[0];
-        console.log("Anime trovato:", anime.title);
+        const animeId = results[0].id;
+        console.log("ID Trovato:", animeId);
 
-        // Generiamo i link per i primi episodi
-        // Questo server restituisce link diretti più facilmente
-        const infoUrl = `https://anime-api.xyz/api/gogoanime/info/${anime.id}`;
+        // Recuperiamo i dettagli dell'ultimo episodio
+        const infoUrl = `https://api.consumet.org/anime/gogoanime/info/${animeId}`;
         const info = await axios.get(infoUrl);
+        
+        if (!info.data.episodes || info.data.episodes.length === 0) return [];
 
-        if (!info.data || !info.data.episodes) return [];
-
-        const firstEp = info.data.episodes[0];
-        const streamUrl = `https://anime-api.xyz/api/gogoanime/watch/${firstEp.id}`;
-        const { data: streams } = await axios.get(streamUrl);
-
-        return streams.sources.map(s => ({
-            name: "Anikai (Alt) 🪐",
-            title: `ENG - ${s.quality}`,
-            url: s.url
-        }));
+        const lastEp = info.data.episodes[info.data.episodes.length - 1];
+        
+        // Restituiamo il link dello streaming
+        // Nota: Il nome visualizzato sarà quello che desideri tu
+        return [{
+            name: "Anikai 🪐",
+            title: `ENG - Ep ${lastEp.number}\n${results[0].title}`,
+            url: `https://shaka-player.vercel.app/?url=https://api.consumet.org/anime/gogoanime/watch/${lastEp.id}`
+        }];
 
     } catch (e) {
-        console.log("Errore Sorgente Alternativa:", e.message);
+        console.log("Errore Anikai:", e.message);
         return [];
     }
 }
