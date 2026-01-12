@@ -2,39 +2,46 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca Anikai per:", title);
+        console.log("Tentativo di bypass per:", title);
         
-        // Usiamo un endpoint di ricerca alternativo e più stabile
-        const searchUrl = `https://api.consumet.org/anime/gogoanime/${encodeURIComponent(title)}`;
-        const response = await axios.get(searchUrl, { timeout: 10000 });
+        // Usiamo un aggregatore che non abbiamo ancora provato
+        // Questo endpoint è specifico per animepahe
+        const searchUrl = `https://api.consumet.org/anime/animepahe/${encodeURIComponent(title)}`;
+        const res = await axios.get(searchUrl, { timeout: 8000 });
 
-        const results = response.data.results;
-        if (!results || results.length === 0) {
-            console.log("Nessun risultato trovato.");
+        if (!res.data || !res.data.results || res.data.results.length === 0) {
+            console.log("Sorgente Pahe: Nessun risultato.");
             return [];
         }
 
-        const animeId = results[0].id;
-        console.log("ID Trovato:", animeId);
+        const animeId = res.data.results[0].id;
+        console.log("Anime trovato su Pahe! ID:", animeId);
 
-        // Recuperiamo i dettagli dell'ultimo episodio
-        const infoUrl = `https://api.consumet.org/anime/gogoanime/info/${animeId}`;
+        // Prendiamo le info degli episodi
+        const infoUrl = `https://api.consumet.org/anime/animepahe/info/${animeId}`;
         const info = await axios.get(infoUrl);
-        
-        if (!info.data.episodes || info.data.episodes.length === 0) return [];
 
+        if (!info.data || !info.data.episodes) return [];
+
+        // Prendiamo l'ultimo episodio caricato
         const lastEp = info.data.episodes[info.data.episodes.length - 1];
-        
-        // Restituiamo il link dello streaming
-        // Nota: Il nome visualizzato sarà quello che desideri tu
-        return [{
+
+        // Qui prendiamo i link video reali
+        const watchUrl = `https://api.consumet.org/anime/animepahe/watch/${lastEp.id}`;
+        const streams = await axios.get(watchUrl);
+
+        return streams.data.sources.map(s => ({
             name: "Anikai 🪐",
-            title: `ENG - Ep ${lastEp.number}\n${results[0].title}`,
-            url: `https://shaka-player.vercel.app/?url=https://api.consumet.org/anime/gogoanime/watch/${lastEp.id}`
-        }];
+            title: `ENG - ${s.quality}\nEp. ${lastEp.number}`,
+            url: s.url,
+            behaviorHints: {
+                notWebReady: false,
+                proxyHeaders: { "Referer": "https://animepahe.com" }
+            }
+        }));
 
     } catch (e) {
-        console.log("Errore Anikai:", e.message);
+        console.log("Errore critico Pahe:", e.message);
         return [];
     }
 }
