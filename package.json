@@ -2,8 +2,10 @@
   "name": "anikai-plus",
   "version": "1.0.0",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "stremio-addon-sdk": "^1.6.0",
     "axios": "^1.6.0",
     "cheerio": "^1.0.0-rc.12"
   }
