@@ -2,13 +2,13 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Copiamo i file necessari
+# Copia i file
 COPY package.json ./
 
-# Installiamo le dipendenze (ora funzionerà perché la versione è corretta)
-RUN npm install
+# Installazione forzata dei pacchetti uno ad uno
+RUN npm install stremio-addon-sdk axios cheerio @consumet/extensions
 
-# Copiamo il resto dei file
+# Copia il resto
 COPY . .
 
 EXPOSE 8000
