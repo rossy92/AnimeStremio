@@ -1,40 +1,53 @@
 const axios = require("axios");
 
-const PROXY_URL = "https://gay-toucan-newross-cd988fb6.koyeb.app";
-const PASSWORD = "4Str3m10";
+// Usiamo l'istanza ufficiale di Consumet che ha tutto il database Anime
+const BASE_URL = "https://api.consumet.org/anime/gogoanime";
 
 async function getStreams(title) {
     try {
-        // Tentativo su rotta "nascosta" tipica di alcuni fork di UnHided
-        const config = { headers: { "api_password": PASSWORD }, timeout: 5000 };
-        
-        console.log(`[Discovery] Verifico rotta base per: ${title}`);
-        
-        // Questo è il formato che molti fork usano quando nascondono i nomi dei provider
-        const url = `${PROXY_URL}/v1/search?q=${encodeURIComponent(title)}`;
-        const res = await axios.get(url, config);
+        console.log(`[Anikai] Ricerca globale per: ${title}`);
 
-        if (res.data && res.data.length > 0) {
-            const anime = res.data[0];
-            return [{
-                name: "Anikai Private 🪐",
-                title: `Trovato: ${anime.title}`,
-                url: `${PROXY_URL}/v1/watch/${anime.id}?api_password=${PASSWORD}`
-            }];
+        // 1. Cerchiamo l'ID dell'anime
+        const searchRes = await axios.get(`${BASE_URL}/${encodeURIComponent(title)}`, { timeout: 10000 });
+        const results = searchRes.data.results;
+
+        if (results && results.length > 0) {
+            const anime = results[0];
+            console.log(`✅ Anime trovato: ${anime.title}`);
+
+            // 2. Recuperiamo la lista episodi
+            const infoRes = await axios.get(`https://api.consumet.org/anime/gogoanime/info/${anime.id}`);
+            const episodes = infoRes.data.episodes;
+
+            if (!episodes || episodes.length === 0) {
+                console.log("Nessun episodio trovato.");
+                return [];
+            }
+
+            // Prendiamo l'ultimo episodio (o quello disponibile)
+            const lastEp = episodes[episodes.length - 1];
+            console.log(`Recupero link per Episodio ${lastEp.number}`);
+
+            // 3. Otteniamo i link video reali
+            const watchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/watch/${lastEp.id}`);
+            
+            return (watchRes.data.sources || []).map(s => ({
+                name: "Anikai Cinema 🪐",
+                title: `${s.quality} - Ep. ${lastEp.number}\n${anime.title}`,
+                url: s.url,
+                behaviorHints: {
+                    proxyHeaders: { 
+                        "Referer": "https://gogoanime.bid/",
+                        "User-Agent": "Mozilla/5.0"
+                    }
+                }
+            }));
+        } else {
+            console.log("Nessun risultato trovato sul database globale.");
         }
     } catch (e) {
-        console.log("❌ Rotta /v1/search non trovata.");
+        console.log(`❌ Errore sistema: ${e.message}`);
     }
-
-    // Se fallisce, chiediamo al proxy "Cosa sai fare?"
-    try {
-        const openapi = await axios.get(`${PROXY_URL}/openapi.json`);
-        const paths = Object.keys(openapi.data.paths).slice(0, 5); // Prende le prime 5 rotte
-        console.log("🔍 Rotte disponibili sul tuo proxy:", paths.join(" | "));
-    } catch (err) {
-        console.log("Impossibile leggere la mappa del proxy.");
-    }
-
     return [];
 }
 
