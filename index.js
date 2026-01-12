@@ -16,24 +16,26 @@ const builder = new addonBuilder({
 // Traduzione ID -> Titolo
 async function getTitleFromId(id) {
     try {
-        // Se è un ID Kitsu
+        // Se clicchi da un catalogo Anime (Kitsu)
         if (id.startsWith("kitsu:")) {
             const kitsuId = id.split(":")[1];
-            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 5000 });
+            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`);
             return res.data.data.attributes.canonicalTitle;
         }
-        // Se è un ID IMDb (tt...)
+        
+        // Se clicchi dal catalogo Generale (IMDb/TMDB)
         if (id.startsWith("tt")) {
-            const imdbId = id.split(":")[0]; // Prende solo tt123456
+            const imdbId = id.split(":")[0]; // Toglie eventuali :1:1 finali
             const res = await axios.get(`https://v3-cinemeta.strem.io/meta/series/${imdbId}.json`);
             return res.data.meta.name;
         }
+        
         return id;
     } catch (e) {
+        console.log("Errore traduzione ID:", e.message);
         return id;
     }
 }
-
 builder.defineStreamHandler(async (args) => {
     console.log(`--- Richiesta per ID: ${args.id} ---`);
     const title = await getTitleFromId(args.id);
