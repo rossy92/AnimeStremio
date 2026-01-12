@@ -2,44 +2,34 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        // Usiamo un mirror diverso (AnimePahe o simile tramite consumet)
-        // Questo endpoint è solitamente più reattivo di Gogoanime
-        const searchUrl = `https://api-consumet-org-five.vercel.app/anime/animepahe/${encodeURIComponent(title)}`;
-        
-        console.log(`[Anikai] Ricerca su sorgente alternativa: ${title}`);
-        const res = await axios.get(searchUrl, { timeout: 10000 });
-        
-        const results = res.data.results || [];
+        console.log(`[Anikai] Generazione Link Universale per: ${title}`);
 
-        if (results.length > 0) {
-            const anime = results[0];
-            console.log(`✅ Trovato: ${anime.title}`);
+        // Puliamo il titolo per i motori di ricerca
+        const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-            // Recuperiamo info episodi
-            const infoRes = await axios.get(`https://api-consumet-org-five.vercel.app/anime/animepahe/info/${anime.id}`);
-            const episodes = infoRes.data.episodes || [];
+        // Creiamo una lista di sorgenti "Direct Embed" 
+        // Queste non passano per API fragili, ma puntano a grandi aggregatori
+        const streams = [
+            {
+                name: "Anikai Multi 🪐",
+                title: `Streaming Multi-Lingua\n${title}`,
+                // Usiamo vidsrc.to o simili che sono i più stabili al mondo
+                url: `https://vidsrc.to/embed/anime/${cleanTitle}`
+            },
+            {
+                name: "Anikai Server 2 🚀",
+                title: `Backup High Speed\n${title}`,
+                url: `https://vidsrc.me/embed/anime?last_episode=1&title=${encodeURIComponent(title)}`
+            }
+        ];
 
-            if (episodes.length === 0) return [];
-            const lastEp = episodes[episodes.length - 1];
+        console.log(`✅ Link generati per ${title}.`);
+        return streams;
 
-            // Recuperiamo i link video
-            const watchRes = await axios.get(`https://api-consumet-org-five.vercel.app/anime/animepahe/watch/${lastEp.id}`);
-            const sources = watchRes.data.sources || [];
-
-            console.log(`🚀 Invio ${sources.length} link a Stremio`);
-
-            return sources.map(s => ({
-                name: "Anikai High 🪐",
-                title: `${s.quality} - Ep. ${lastEp.number}\n${anime.title}`,
-                url: s.url
-            }));
-        } else {
-            console.log("❌ Anche questa sorgente non ha restituito risultati.");
-        }
     } catch (e) {
-        console.log(`❌ Errore critico: ${e.message}`);
+        console.log(`❌ Errore generazione: ${e.message}`);
+        return [];
     }
-    return [];
 }
 
 module.exports = { getStreams };
