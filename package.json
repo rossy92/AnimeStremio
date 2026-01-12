@@ -1,4 +1,11 @@
 {
+  "name": "stremio-ita-addon",
+  "version": "1.0.0",
+  "description": "Addon Stremio per Anime",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "stremio-addon-sdk": "^1.6.10",
     "axios": "^1.6.0",
