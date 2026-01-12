@@ -1,6 +1,7 @@
 {
   "name": "anikai-plus",
   "version": "1.0.0",
+  "description": "Anime Addon",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
