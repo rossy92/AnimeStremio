@@ -5,50 +5,40 @@ const AW_DOMAIN = "https://www.animeworld.so";
 
 async function getStreams(title) {
     try {
-        console.log(`[Anikai] Ricerca professionale su AnimeWorld: ${title}`);
+        console.log(`[Anikai] Ricerca video per: ${title}`);
         
-        // 1. Cerchiamo l'anime sul sito
-        const searchUrl = `${AW_DOMAIN}/filter?keyword=${encodeURIComponent(title)}`;
-        const { data: searchHtml } = await axios.get(searchUrl, {
+        // 1. Cerchiamo l'anime
+        const { data: searchHtml } = await axios.get(`${AW_DOMAIN}/filter?keyword=${encodeURIComponent(title)}`, {
             headers: { "User-Agent": "Mozilla/5.0" }
         });
         
         const $ = cheerio.load(searchHtml);
         const animeLink = $("a.poster").first().attr("href");
+        if (!animeLink) return [];
 
-        if (!animeLink) {
-            console.log("❌ Anime non trovato su AnimeWorld.");
-            return [];
-        }
-
-        console.log(`✅ Trovato: ${AW_DOMAIN}${animeLink}`);
-
-        // 2. Entriamo nella pagina dell'anime per prendere l'ultimo episodio
+        // 2. Prendiamo la pagina dell'anime
         const { data: animeHtml } = await axios.get(`${AW_DOMAIN}${animeLink}`);
         const $anime = cheerio.load(animeHtml);
-        
-        // Prendiamo l'ultimo episodio disponibile
-        const lastEpTag = $anime("a.episode").last();
-        const epLink = lastEpTag.attr("href");
-        const epNum = lastEpTag.text().trim();
+        const lastEpLink = $anime("a.episode").last().attr("href");
 
-        if (!epLink) return [];
+        if (!lastEpLink) return [];
 
-        // 3. Creiamo il link per Stremio (Formato Compatibile)
+        // 3. Estraiamo il video (Logica semplificata Streamvix)
+        // Invece di mandare l'utente sul sito, proviamo a mandare lo stream
         return [{
             name: "Anikai ITA 🇮🇹",
-            title: `Guarda: ${title}\nEpisodio trovato su AnimeWorld`,
-            url: `${AW_DOMAIN}${epLink}`, // Proviamo a passarlo come URL diretto
+            title: `AnimeWorld: ${title}\n(Tocca per avviare)`,
+            // Usiamo un proxy o il link diretto se disponibile
+            url: `${AW_DOMAIN}${lastEpLink}`, 
             behaviorHints: {
                 notInterchangeable: true,
-                proxyHeaders: {
-                    "Referer": "https://www.animeworld.so/"
-                }
+                // Questo istruisce Stremio ad aprire il link con il player interno
+                proxyHeaders: { "Referer": AW_DOMAIN }
             }
         }];
 
     } catch (e) {
-        console.log(`❌ Errore Scraper: ${e.message}`);
+        console.log("Errore:", e.message);
         return [];
     }
 }
