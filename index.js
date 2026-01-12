@@ -16,15 +16,21 @@ const builder = new addonBuilder({
 // Traduzione ID -> Titolo
 async function getTitleFromId(id) {
     try {
-        if (id.includes("kitsu:")) {
+        // Se è un ID Kitsu
+        if (id.startsWith("kitsu:")) {
             const kitsuId = id.split(":")[1];
             const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 5000 });
             return res.data.data.attributes.canonicalTitle;
         }
+        // Se è un ID IMDb (tt...)
+        if (id.startsWith("tt")) {
+            const imdbId = id.split(":")[0]; // Prende solo tt123456
+            const res = await axios.get(`https://v3-cinemeta.strem.io/meta/series/${imdbId}.json`);
+            return res.data.meta.name;
+        }
         return id;
     } catch (e) {
-        console.log("Errore Kitsu:", e.message);
-        return "Anime"; 
+        return id;
     }
 }
 
