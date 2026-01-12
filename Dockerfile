@@ -2,13 +2,13 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Copia solo il file delle dipendenze
+# Copiamo i file necessari
 COPY package.json ./
 
-# Installa le dipendenze ignorando avvisi e cache
-RUN npm install --no-audit
+# Installiamo le dipendenze (ora funzionerà perché la versione è corretta)
+RUN npm install
 
-# Copia il resto dei file
+# Copiamo il resto dei file
 COPY . .
 
 EXPOSE 8000
