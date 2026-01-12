@@ -1,54 +1,53 @@
 const axios = require("axios");
 
-// Il tuo proxy personale (senza slash finale)
 const PROXY_URL = "https://gay-toucan-newross-cd988fb6.koyeb.app";
 
 async function getStreams(title) {
-    try {
-        console.log(`[Anikai] Provo il tuo proxy per: ${title}`);
-        
-        // 1. Proviamo la ricerca (rimosso il prefisso /anime/ che spesso causa 404)
-        // La struttura standard di molti proxy è: PROXY_URL/gogoanime/TITOLO
-        const searchUrl = `${PROXY_URL}/gogoanime/${encodeURIComponent(title)}`;
-        const searchRes = await axios.get(searchUrl, { timeout: 10000 });
-        
-        const results = searchRes.data.results;
-        if (!results || results.length === 0) {
-            console.log("Nessun risultato trovato sul proxy.");
-            return [];
-        }
+    // Proviamo i 3 percorsi più probabili che i proxy Koyeb usano
+    const pathsToTest = [
+        `${PROXY_URL}/anime/gogoanime/${encodeURIComponent(title)}`,
+        `${PROXY_URL}/gogoanime/${encodeURIComponent(title)}`,
+        `${PROXY_URL}/meta/anilist/${encodeURIComponent(title)}`
+    ];
 
-        const animeId = results[0].id;
-        console.log(`Trovato! ID: ${animeId}`);
+    for (const url of pathsToTest) {
+        try {
+            console.log(`Tentativo su: ${url}`);
+            const res = await axios.get(url, { timeout: 5000 });
+            
+            if (res.data && res.data.results && res.data.results.length > 0) {
+                const anime = res.data.results[0];
+                console.log(`✅ FUNZIONA! Trovato con: ${url}`);
+                
+                // Determiniamo la base per le info in base a cosa ha funzionato
+                const isMeta = url.includes("/meta/");
+                const infoUrl = isMeta 
+                    ? `${PROXY_URL}/meta/anilist/info/${anime.id}`
+                    : `${PROXY_URL}/info/${anime.id}`;
 
-        // 2. Info episodi
-        const infoRes = await axios.get(`${PROXY_URL}/info/${animeId}`);
-        const episodes = infoRes.data.episodes;
-        if (!episodes || episodes.length === 0) return [];
+                const info = await axios.get(infoUrl);
+                const episodes = info.data.episodes;
+                if (!episodes || episodes.length === 0) continue;
 
-        const lastEp = episodes[episodes.length - 1];
+                const lastEp = episodes[episodes.length - 1];
+                const watchUrl = isMeta
+                    ? `${PROXY_URL}/meta/anilist/watch/${lastEp.id}`
+                    : `${PROXY_URL}/watch/${lastEp.id}`;
 
-        // 3. Link video
-        const watchRes = await axios.get(`${PROXY_URL}/watch/${lastEp.id}`);
-        
-        if (!watchRes.data || !watchRes.data.sources) return [];
+                const watch = await axios.get(watchUrl);
 
-        return watchRes.data.sources.map(s => ({
-            name: "Anikai Private 🪐",
-            title: `${s.quality} - Ep.${lastEp.number}\n${results[0].title}`,
-            url: s.url,
-            behaviorHints: {
-                proxyHeaders: {
-                    "Referer": "https://gogoanime.bid/",
-                    "User-Agent": "Mozilla/5.0"
-                }
+                return watch.data.sources.map(s => ({
+                    name: "Anikai Private 🪐",
+                    title: `${s.quality} - ${anime.title}`,
+                    url: s.url
+                }));
             }
-        }));
-
-    } catch (e) {
-        console.log(`Errore Proxy (${e.response ? e.response.status : "Network"}):`, e.message);
-        return [];
+        } catch (e) {
+            console.log(`❌ Fallito ${url.split('/')[3]}: ${e.message}`);
+            continue; 
+        }
     }
+    return [];
 }
 
 module.exports = { getStreams };
