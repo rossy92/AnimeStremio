@@ -1,13 +1,11 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 const animeworld = require("./providers/animeworld");
-// Per ora commentiamo Saturn per isolare il problema
-// const animesaturn = require("./providers/animesaturn");
 
 const manifest = {
     id: "org.animestremio.ita",
-    version: "1.9.0",
+    version: "2.0.0", // Salto di versione per pulire la cache di Stremio
     name: "AnimeStremio ITA",
-    description: "Multi-fonte provvisorio",
+    description: "Sorgente Dinamica",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"],
@@ -17,30 +15,18 @@ const manifest = {
 const builder = new addonBuilder(manifest);
 
 builder.defineStreamHandler(async (args) => {
-    // Proviamo a estrarre un titolo verosimile dall'ID
-    // Se è un anime (kitsu:123), cercheremo quello, altrimenti One Piece di default
-    let query = "One Piece"; 
-    if (args.id.includes("kitsu")) query = "Naruto"; // Test alternativo
-
-    console.log("Richiesta per query:", query);
+    // Estraiamo il titolo dall'ID. 
+    // Se è kitsu:1, diventerà "Anime ID 1"
+    const cleanTitle = args.id.replace(':', ' ').replace(':', ' ');
+    
+    console.log("Richiesta per:", cleanTitle);
 
     try {
-        const streams = await animeworld.getStreams(query);
-        
-        if (streams.length > 0) {
-            return { streams };
-        }
+        const streams = await animeworld.getStreams(cleanTitle);
+        return { streams };
     } catch (err) {
-        console.error(err);
+        return { streams: [] };
     }
-
-    return { 
-        streams: [{ 
-            name: "Info", 
-            title: "Provando a connettere AnimeWorld...", 
-            url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
-        }] 
-    };
 });
 
 module.exports = builder.getInterface();
