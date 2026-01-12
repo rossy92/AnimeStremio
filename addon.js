@@ -1,23 +1,22 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 const axios = require("axios");
 
-// Per ora non importiamo nulla, lasciamo i file nella cartella providers
-// e li richiameremo appena siamo pronti.
+// 1. IMPORTA ANIKAI
+const anikai = require("./providers/anikai");
 
 const manifest = {
     id: "org.animestremio.ita",
     version: "2.2.0",
     name: "AnimeStremio MULTI",
-    description: "In attesa di configurazione provider",
+    description: "Anikai Eng Provider",
     resources: ["stream"],
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"],
-    catalogs: [] // Deve essere un array vuoto
+    catalogs: []
 };
 
 const builder = new addonBuilder(manifest);
 
-// Funzione di servizio per ottenere il nome dall'ID
 async function getNameFromId(id) {
     try {
         if (id.startsWith("kitsu:")) {
@@ -33,18 +32,29 @@ async function getNameFromId(id) {
 }
 
 builder.defineStreamHandler(async (args) => {
-    const searchTitle = await getNameFromId(args.id) || "Anime";
-    console.log("Ricerca ricevuta per:", searchTitle);
+    const searchTitle = await getNameFromId(args.id);
+    if (!searchTitle) return { streams: [] };
 
-    // Qui restituiremo un link di test fisso per essere sicuri che il deploy FUNZIONI
-    // Se vedi questo link su Stremio, il deploy è ufficialmente guarito.
-    return Promise.resolve({
-        streams: [{
-            name: "SISTEMA OK",
-            title: `Pronto per provider inglesi: ${searchTitle}`,
-            url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        }]
-    });
+    console.log("Ricerca Anikai per:", searchTitle);
+
+    try {
+        // 2. CHIAMA ANIKAI
+        const streams = await anikai.getStreams(searchTitle);
+        
+        if (streams && streams.length > 0) {
+            return { streams: streams };
+        }
+    } catch (e) {
+        console.log("Errore durante la ricerca:", e.message);
+    }
+
+    return { 
+        streams: [{ 
+            name: "Info", 
+            title: `Nessun link trovato su Anikai per: ${searchTitle}`, 
+            url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+        }] 
+    };
 });
 
 module.exports = builder.getInterface();
