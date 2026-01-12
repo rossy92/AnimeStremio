@@ -2,10 +2,7 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        // Rimuoviamo eventuali scorie dal titolo
-        const cleanTitle = title.replace(/kitsu|tt|\d+/gi, '').trim();
-        const searchUrl = `https://www.animeworld.so/api/search?keyword=${encodeURIComponent(cleanTitle || title)}`;
-        
+        const searchUrl = `https://www.animeworld.so/api/search?keyword=${encodeURIComponent(title)}`;
         const response = await axios.get(searchUrl, { timeout: 5000 });
 
         if (response.data && response.data.animes && response.data.animes.length > 0) {
@@ -17,10 +14,6 @@ async function getStreams(title) {
             }];
         }
         return [];
-    } catch (e) {
-        return [];
-    }
+    } catch (e) { return []; }
 }
-
-// IL NOME QUI SOTTO DEVE ESSERE UGUALE A QUELLO SOPRA
 module.exports = { getStreams };
