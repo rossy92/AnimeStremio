@@ -1,7 +1,7 @@
 const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
 const axios = require("axios");
 const anikai = require("./providers/anikai");
-const gogo = require("./providers/gogo"); // Nuovo
+const gogo = require("./providers/gogoanime"); // Nuovo
 
 const builder = new addonBuilder({
     id: "org.anikai.plus.final",
