@@ -2,42 +2,39 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        // 1. Cerchiamo l'ID dell'anime tramite l'API di Consumet (GogoAnime provider)
-        const searchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/${encodeURIComponent(title)}`, { timeout: 5000 });
-        const anime = searchRes.data.results[0]; // Prendiamo il primo risultato
-
-        if (!anime) return [];
-
-        // 2. Prendiamo i link dell'episodio 1 (per ora testiamo il primo)
-        const episodeId = `${anime.id}-episode-1`;
-        const watchRes = await axios.get(`https://api.consumet.org/anime/gogoanime/watch/${episodeId}`);
+        // Usiamo un'istanza alternativa di Consumet più stabile
+        const instance = "https://api-consumet-org-three.vercel.app"; 
         
-        // 3. Estraiamo il link con qualità "default" o "hls" (m3u8)
-        const streams = watchRes.data.sources.map(source => {
-            return {
-                name: "Anikai ENG ⚡",
-                title: `DIRECT: ${title}\nQuality: ${source.quality}`,
-                url: source.url, // Questo è il link DIRETTO al file video (.m3u8)
-                behaviorHints: {
-                    notInterchangeable: true
+        // 1. Ricerca dell'anime
+        const searchRes = await axios.get(`${instance}/anime/gogoanime/${encodeURIComponent(title)}`, { timeout: 4000 });
+        const anime = searchRes.data.results[0];
+
+        if (!anime) throw new Error("Anime non trovato");
+
+        // 2. Recupero link episodio 1 (per test)
+        const watchRes = await axios.get(`${instance}/anime/gogoanime/watch/${anime.id}-episode-1`);
+        
+        if (!watchRes.data.sources) throw new Error("Nessuna sorgente");
+
+        return watchRes.data.sources.map(source => ({
+            name: "Anikai ENG ⚡",
+            title: `DIRECT: ${title}\nQuality: ${source.quality}`,
+            url: source.url,
+            behaviorHints: {
+                notInterchangeable: true,
+                proxyHeaders: {
+                    "Referer": "https://gogoanime3.co/",
+                    "User-Agent": "Mozilla/5.0"
                 }
-            };
-        });
+            }
+        }));
 
-        // Aggiungiamo sempre il backup esterno per sicurezza
-        streams.push({
-            name: "Anikai ENG 🇬🇧",
-            title: `Backup: Browser Search`,
-            externalUrl: `https://hianime.to/search?keyword=${encodeURIComponent(title)}`
-        });
-
-        return streams;
     } catch (e) {
-        console.log("Errore API Consumet:", e.message);
-        // Se l'API fallisce, restituiamo almeno il backup
+        console.log("Errore:", e.message);
+        // Se tutto fallisce, torniamo al caro vecchio link esterno che non tradisce mai
         return [{
             name: "Anikai ENG 🇬🇧",
-            title: `Search on HiAnime (API Down)`,
+            title: `Search on HiAnime (Direct Play Busy)`,
             externalUrl: `https://hianime.to/search?keyword=${encodeURIComponent(title)}`
         }];
     }
