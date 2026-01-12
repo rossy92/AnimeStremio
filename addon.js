@@ -1,10 +1,9 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 
 const manifest = {
-    id: "org.animestremio.ita",
+    id: "org.animestremio.test",
     version: "1.0.0",
-    name: "AnimeStremio",
-    description: "Addon Test",
+    name: "AnimeStremio Test",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"]
@@ -13,13 +12,11 @@ const manifest = {
 const builder = new addonBuilder(manifest);
 
 builder.defineStreamHandler((args) => {
-    console.log("Richiesta ricevuta per ID:", args.id);
-
     return Promise.resolve({
         streams: [
             {
-                name: "AnimeStremio",
-                title: "DEBUG: Server Connesso Correttamente!",
+                name: "Addon Test",
+                title: "Connessione Riuscita!",
                 url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             }
         ]
