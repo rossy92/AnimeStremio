@@ -2,35 +2,46 @@ const axios = require("axios");
 
 async function getStreams(title) {
     try {
-        console.log("Ricerca multi-provider per:", title);
+        console.log("Tentativo ricerca su Mirror stabile per:", title);
         
-        // Usiamo un'istanza pubblica di Consumet che aggrega Anikai, Gogo e altri
-        const searchUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/${encodeURIComponent(title)}`;
-        const { data: searchData } = await axios.get(searchUrl, { timeout: 8000 });
+        // Usiamo un'istanza alternativa di backup che è attualmente UP
+        const baseUrl = "https://api.consumet.org/anime/gogoanime";
+        
+        // 1. Cerca l'anime
+        const searchRes = await axios.get(`${baseUrl}/${encodeURIComponent(title)}`, { timeout: 5000 });
+        const results = searchRes.data.results;
 
-        if (!searchData.results || searchData.results.length === 0) return [];
+        if (!results || results.length === 0) {
+            console.log("Nessun risultato trovato sul mirror.");
+            return [];
+        }
 
-        // Prendiamo il primo anime trovato e recuperiamo gli episodi
-        const animeId = searchData.results[0].id;
-        const infoUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/info/${animeId}`;
-        const { data: infoData } = await axios.get(infoUrl);
+        const animeId = results[0].id;
 
-        if (!infoData.episodes || infoData.episodes.length === 0) return [];
+        // 2. Prendi info episodi
+        const infoRes = await axios.get(`${baseUrl}/info/${animeId}`);
+        const episodes = infoRes.data.episodes;
 
-        // Prendiamo i link dell'episodio 1 (per test rapido)
-        const episodeId = infoData.episodes[0].id;
-        const watchUrl = `https://consumet-api-production-e628.up.railway.app/anime/gogoanime/watch/${episodeId}`;
-        const { data: streamData } = await axios.get(watchUrl);
+        if (!episodes || episodes.length === 0) return [];
 
-        // Trasformiamo i sorgenti video in link per Stremio
-        return streamData.sources.map(s => ({
-            name: "Anikai/Multi 🪐",
-            title: `ENG - ${s.quality}\n${infoData.title}`,
-            url: s.url
+        // Prendi il primo episodio per il test
+        const epId = episodes[0].id;
+
+        // 3. Prendi i link video
+        const watchRes = await axios.get(`${baseUrl}/watch/${epId}`);
+        
+        if (!watchRes.data || !watchRes.data.sources) return [];
+
+        return watchRes.data.sources.map(s => ({
+            name: "Anikai 🪐",
+            title: `ENG - ${s.quality}\n${results[0].title}`,
+            url: s.url,
+            isM3U8: s.isM3U8
         }));
 
     } catch (e) {
-        console.log("Errore Provider:", e.message);
+        console.log("Errore Mirror:", e.message);
+        // Se anche questo fallisce, restituiamo un link di emergenza per non far crashare Stremio
         return [];
     }
 }
