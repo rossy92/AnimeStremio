@@ -1,27 +1,25 @@
-# Usa un'immagine leggera di Node.js
-FROM node:18-slim
+FROM node:18-bullseye-slim
 
-# Installa le librerie necessarie per il sistema (fondamentali per alcune estensioni)
+# Installiamo gli strumenti necessari per compilare pacchetti complessi
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Crea la cartella dell'app
 WORKDIR /app
 
-# Copia i file delle dipendenze
-COPY package*.json ./
+# Copiamo i file delle dipendenze
+COPY package.json ./
 
-# Installa le dipendenze (incluse quelle di Consumet)
-RUN npm install --production
+# Pulizia cache e installazione forzata
+RUN npm cache clean --force
+RUN npm install
 
-# Copia tutto il resto del codice
+# Copiamo tutto il resto del codice
 COPY . .
 
-# Esponi la porta (Koyeb userà questa)
+# Usiamo la porta 8000 che è lo standard di Koyeb
 EXPOSE 8000
 
-# Avvia l'addon usando la variabile PORT di Koyeb
 CMD ["node", "server.js"]
