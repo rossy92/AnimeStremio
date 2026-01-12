@@ -1,7 +1,7 @@
 const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
 const axios = require("axios");
 const anikai = require("./providers/anikai");
-const gogo = require("./providers/gogoanime");
+const gogoanime = require("./providers/gogoanime"); // Nome file corretto
 
 const manifest = {
     id: "com.anikai.plus.final",
@@ -15,16 +15,44 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 
-builder.defineStreamHandler(async (args) => {
-    console.log("Richiesta per ID:", args.id);
-    
-    // Per ora restituiamo un array vuoto se fallisce, 
-    // così Stremio non vede errori e l'addon resta attivo
+async function getTitleFromId(id) {
     try {
-        const title = "Death Note"; // Test rapido per vedere se carica
-        const streams = await anikai.getStreams(title);
-        return { streams: streams || [] };
+        if (id.startsWith("kitsu:")) {
+            const kitsuId = id.split(":")[1];
+            const res = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 3000 });
+            return res.data.data.attributes.canonicalTitle;
+        }
+        if (id.startsWith("tt")) {
+            const imdbId = id.split(":")[0];
+            const res = await axios.get(`https://v3-cinemeta.strem.io/meta/series/${imdbId}.json`, { timeout: 3000 });
+            return res.data.meta.name;
+        }
     } catch (e) {
+        return null;
+    }
+    return null;
+}
+
+builder.defineStreamHandler(async (args) => {
+    const title = await getTitleFromId(args.id);
+    if (!title) return { streams: [] };
+
+    console.log(`--- Ricerca per: ${title} ---`);
+
+    try {
+        // Usiamo i nomi corretti delle costanti definite sopra
+        const [ita, eng] = await Promise.allSettled([
+            anikai.getStreams(title),
+            gogoanime.getStreams(title) // Usato il nome sincronizzato
+        ]);
+
+        const streams = [];
+        if (ita.status === "fulfilled" && ita.value) streams.push(...ita.value);
+        if (eng.status === "fulfilled" && eng.value) streams.push(...eng.value);
+
+        return { streams: streams };
+    } catch (e) {
+        console.log("Errore stream handler:", e.message);
         return { streams: [] };
     }
 });
