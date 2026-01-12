@@ -1,16 +1,17 @@
-FROM node:18-slim
+# Cambiamo da 18 a 20-slim
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copia i file
-COPY package.json ./
+# Installiamo i pacchetti direttamente per evitare errori di versioni
+RUN npm init -y && \
+    npm install stremio-addon-sdk axios cheerio @consumet/extensions
 
-# Installazione forzata dei pacchetti uno ad uno
-RUN npm install stremio-addon-sdk axios cheerio @consumet/extensions
-
-# Copia il resto
+# Copiamo i tuoi file
 COPY . .
 
+# Impostiamo la porta corretta
+ENV PORT=8000
 EXPOSE 8000
 
 CMD ["node", "server.js"]
