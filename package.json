@@ -1,7 +1,6 @@
 {
   "name": "animestremio",
   "version": "1.0.0",
-  "description": "Stremio Addon",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
