@@ -3,6 +3,9 @@ const addonInterface = require("./addon");
 
 const port = process.env.PORT || 8000;
 
-serveHTTP(addonInterface, { port: port });
+serveHTTP(addonInterface, { 
+    port: port,
+    hostname: "0.0.0.0"
+});
 
-console.log(`Addon pronto sulla porta ${port}`);
+console.log(`Server attivo sulla porta ${port}`);
