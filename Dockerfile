@@ -1,25 +1,16 @@
-FROM node:18-bullseye-slim
-
-# Installiamo gli strumenti necessari per compilare pacchetti complessi
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+FROM node:18-slim
 
 WORKDIR /app
 
-# Copiamo i file delle dipendenze
+# Copia solo il file delle dipendenze
 COPY package.json ./
 
-# Pulizia cache e installazione forzata
-RUN npm cache clean --force
-RUN npm install
+# Installa le dipendenze ignorando avvisi e cache
+RUN npm install --no-audit
 
-# Copiamo tutto il resto del codice
+# Copia il resto dei file
 COPY . .
 
-# Usiamo la porta 8000 che è lo standard di Koyeb
 EXPOSE 8000
 
 CMD ["node", "server.js"]
