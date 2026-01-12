@@ -2,32 +2,31 @@ const axios = require("axios");
 
 async function getStreams(title, episode = "1") {
     try {
-        // Puliamo il titolo per creare lo slug di GogoAnime
+        // Pulizia estrema del titolo per lo slug
         const slug = title.toLowerCase()
-            .replace(/'/g, "")
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)/g, "");
 
-        // Proviamo a puntare a un server di streaming comune (Vidstreaming)
-        // Molti addon usano questa struttura per "saltare" le API
-        const videoUrl = `https://play202.com/embed?id=${slug}-episode-${episode}`;
+        // Usiamo l'istanza di un player che tenta di bypassare i blocchi
+        // Questo è un gateway comune per gli sviluppatori di addon
+        const streamUrl = `https://vidsrc.me/embed/anime?last9=${slug}&ep=${episode}`;
 
         return [
             {
-                name: "Anikai ENG ⚡",
-                title: `DIRECT: ${title}\nEpisode ${episode} (Alpha Test)`,
-                url: videoUrl,
+                name: "Anikai DIRECT 📺",
+                title: `WATCH: ${title}\nEpisode ${episode} (Direct Stream)`,
+                url: streamUrl, 
                 behaviorHints: {
                     notInterchangeable: true,
                     proxyHeaders: {
-                        "Referer": "https://gogoanime3.co/",
-                        "User-Agent": "Mozilla/5.0"
+                        "Referer": "https://vidsrc.me/",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
                     }
                 }
             },
             {
-                name: "Anikai ENG 🇬🇧",
-                title: `Backup: Search on HiAnime`,
+                name: "Anikai SOURCE 🌐",
+                title: `Open in Browser (HiAnime)\n${title} - Episode ${episode}`,
                 externalUrl: `https://hianime.to/search?keyword=${encodeURIComponent(title)}`
             }
         ];
