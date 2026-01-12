@@ -12,20 +12,18 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 
-builder.defineStreamHandler(async (args) => {
+builder.defineStreamHandler((args) => {
     console.log("Richiesta ricevuta per ID:", args.id);
 
-    // Invece di chiamare AniKai (che per ora potrebbe bloccarsi),
-    // diamo una risposta immediata per vedere se Stremio la visualizza
-    return { 
+    return Promise.resolve({
         streams: [
             {
                 name: "AnimeStremio",
-                title: "DEBUG: Server OK - Clicca per Test Video",
+                title: "DEBUG: Server Connesso Correttamente!",
                 url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             }
-        ] 
-    };
+        ]
+    });
 });
 
 module.exports = builder.getInterface();
