@@ -1,7 +1,7 @@
 const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
 const axios = require("axios");
 const anikai = require("./providers/anikai");
-const gogoanime = require("./providers/gogoanime"); // Nome file corretto
+const gogoanime = require("./providers/gogoanime");
 
 const manifest = {
     id: "com.anikai.plus.final",
@@ -40,15 +40,14 @@ builder.defineStreamHandler(async (args) => {
     console.log(`--- Ricerca per: ${title} ---`);
 
     try {
-        // Usiamo i nomi corretti delle costanti definite sopra
         const [ita, eng] = await Promise.allSettled([
             anikai.getStreams(title),
-            gogoanime.getStreams(title) // Usato il nome sincronizzato
+            gogoanime.getStreams(title)
         ]);
 
         const streams = [];
-        if (ita.status === "fulfilled" && ita.value) streams.push(...ita.value);
-        if (eng.status === "fulfilled" && eng.value) streams.push(...eng.value);
+        if (ita.status === "fulfilled" && Array.isArray(ita.value)) streams.push(...ita.value);
+        if (eng.status === "fulfilled" && Array.isArray(eng.value)) streams.push(...eng.value);
 
         return { streams: streams };
     } catch (e) {
@@ -58,4 +57,5 @@ builder.defineStreamHandler(async (args) => {
 });
 
 const addonInterface = builder.getInterface();
-serveHTTP(addonInterface, { port: process.env.PORT || 8080 });
+// CONFIGURATA PORTA 8000 PER KOYEB
+serveHTTP(addonInterface, { port: process.env.PORT || 8000 });
