@@ -4,34 +4,28 @@ const manifest = {
     id: "org.animestremio.ita",
     version: "1.0.0",
     name: "AnimeStremio",
-    description: "Addon per anime in italiano",
+    description: "Addon Test",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
-    catalogs: []
+    idPrefixes: ["tt", "kitsu"]
 };
 
 const builder = new addonBuilder(manifest);
 
-// --- MOTORE DI RICERCA ---
 builder.defineStreamHandler(async (args) => {
-    // args.id contiene l'ID dell'anime, esempio "kitsu:1234:1"
-    console.log("Richiesta per:", args.id);
+    console.log("Richiesta ricevuta per ID:", args.id);
 
-    // Per ora creiamo un link di test per vedere se l'addon risponde
-    // In futuro, qui inseriremo la ricerca automatica sui siti italiani
-    const streams = [
-        {
-            title: "Test Stream (Funzionante!)",
-            description: "Se vedi questo, l'addon comunica con Stremio",
-            url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
-        }
-    ];
-
-    if (args.id) {
-        return { streams: streams };
-    } else {
-        return { streams: [] };
-    }
+    // Invece di chiamare AniKai (che per ora potrebbe bloccarsi),
+    // diamo una risposta immediata per vedere se Stremio la visualizza
+    return { 
+        streams: [
+            {
+                name: "AnimeStremio",
+                title: "DEBUG: Server OK - Clicca per Test Video",
+                url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+            }
+        ] 
+    };
 });
 
 module.exports = builder.getInterface();
