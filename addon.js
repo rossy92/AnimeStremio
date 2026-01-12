@@ -4,9 +4,9 @@ const axios = require("axios");
 
 const manifest = {
     id: "org.animestremio.ita",
-    version: "2.1.0",
+    version: "2.2.0",
     name: "AnimeStremio ITA",
-    description: "Ricerca Automatica Titoli",
+    description: "Ricerca Automatica Fix",
     resources: ["stream"], 
     types: ["anime", "series", "movie"],
     idPrefixes: ["tt", "kitsu"],
@@ -15,18 +15,20 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 
-// Funzione per recuperare il nome dell'anime dall'ID
 async function getNameFromId(id) {
     try {
+        // Se l'ID è di Kitsu (es. kitsu:1234)
         if (id.startsWith("kitsu:")) {
             const kitsuId = id.split(":")[1];
-            const resp = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`);
+            const resp = await axios.get(`https://kitsu.io/api/edge/anime/${kitsuId}`, { timeout: 3000 });
             return resp.data.data.attributes.canonicalTitle;
-        } else if (id.startsWith("tt")) {
+        } 
+        // Se l'ID è di IMDb (es. tt0409591)
+        else if (id.startsWith("tt")) {
             const imdbId = id.split(":")[0];
-            const resp = await axios.get(`https://api.themoviedb.org/3/find/${imdbId}?api_key=8d4f04c6e945c58b5a34c89018428f52&external_source=imdb_id`);
-            if (resp.data.movie_results.length > 0) return resp.data.movie_results[0].title;
-            if (resp.data.tv_results.length > 0) return resp.data.tv_results[0].name;
+            // Usiamo un servizio gratuito che converte IMDb in titoli senza API Key
+            const resp = await axios.get(`https://v3-cinemeta.strem.io/meta/anime/${imdbId}.json`, { timeout: 3000 });
+            return resp.data.meta.name;
         }
     } catch (e) {
         console.log("Errore conversione titolo:", e.message);
@@ -37,19 +39,15 @@ async function getNameFromId(id) {
 builder.defineStreamHandler(async (args) => {
     console.log("Richiesta per ID:", args.id);
 
-    // 1. Convertiamo l'ID in un titolo leggibile (es: tt0409591 -> Naruto)
     const realTitle = await getNameFromId(args.id);
-    const searchTitle = realTitle || args.id;
+    // Se non troviamo il titolo, proviamo a pulire l'ID come ultima spiaggia
+    const searchTitle = realTitle || args.id.split(':')[0];
 
     console.log("Titolo individuato:", searchTitle);
 
     try {
-        // 2. Cerchiamo il titolo su AnimeWorld
         const streams = await animeworld.getStreams(searchTitle);
-        
-        if (streams && streams.length > 0) {
-            return { streams };
-        }
+        if (streams && streams.length > 0) return { streams };
     } catch (err) {
         console.error(err);
     }
@@ -57,7 +55,7 @@ builder.defineStreamHandler(async (args) => {
     return { 
         streams: [{ 
             name: "Info", 
-            title: `Nessun risultato trovato per: ${searchTitle}`, 
+            title: `Nessun risultato per: ${searchTitle}`, 
             url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
         }] 
     };
