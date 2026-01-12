@@ -1,15 +1,12 @@
 {
   "name": "animestremio",
   "version": "1.0.0",
-  "description": "Addon Stremio",
+  "description": "Stremio Addon",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "stremio-addon-sdk": "latest",
-    "axios": "latest",
-    "cheerio": "latest",
-    "@consumet/extensions": "latest"
+    "stremio-addon-sdk": "^1.6.0"
   }
 }
