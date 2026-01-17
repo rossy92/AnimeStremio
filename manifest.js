@@ -1,9 +1,10 @@
 module.exports = {
-  id: "org.animestremio.engdub",
-  version: "0.1.0",
-  name: "Anime ENG Dub",
-  description: "Watch English dubbed anime from external providers",
-  resources: ["stream"],
+  id: "animestremio",
+  version: "1.0.0",
+  name: "AnimeStremio",
+  description: "Stremio addon for English dubbed anime",
   types: ["series"],
-  idPrefixes: ["anilist"]
+  catalogs: [],           // <-- deve essere un array, anche vuoto
+  resources: ["stream"],  // solo stream per ora
+  idPrefixes: ["anilist:"]
 };
