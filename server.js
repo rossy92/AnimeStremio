@@ -1,30 +1,31 @@
 const { serveHTTP } = require("stremio-addon-sdk");
 const builder = require("./manifest");
 
-// Importiamo la logica di ricerca (Assicurati che il file esista in /providers)
+// Importiamo i due provider
 const animePahe = require("./providers/animepahe");
+const animeKai = require("./providers/animekai");
 
 builder.defineStreamHandler(async (args) => {
-    const { type, id } = args;
-    console.log(`Richiesta stream per: ${id}`);
+    const { id } = args;
+    
+    // Proviamo a prendere gli stream da entrambi contemporaneamente
+    try {
+        const [paheStreams, kaiStreams] = await Promise.all([
+            animePahe.getStreams(id),
+            animeKai.getStreams(id)
+        ]);
 
-    if (type === "series" || type === "movie") {
-        try {
-            // Cerchiamo i link usando la funzione definita in animepahe.js
-            const streams = await animePahe.getStreams(id);
-            return { streams: streams || [] };
-        } catch (error) {
-            console.error("Errore nel recupero degli stream:", error);
-            return { streams: [] };
-        }
+        // Uniamo i risultati
+        const allStreams = [...paheStreams, ...kaiStreams];
+
+        return { 
+            streams: allStreams,
+            cacheMaxAge: 14400 // Cache di 4 ore
+        };
+    } catch (e) {
+        return { streams: [] };
     }
-
-    return { streams: [] };
 });
 
-// Configurazione Porta fondamentale per Render
 const port = process.env.PORT || 7000;
-
 serveHTTP(builder.getInterface(), { port: port });
-
-console.log(`Addon HTTP pronto su porta: ${port}`);
