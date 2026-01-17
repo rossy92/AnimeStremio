@@ -1,9 +1,9 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 
 const manifest = {
-    "id": "org.animestremio.rossy92",
+    "id": "org.pahekai.rossy92",
     "version": "1.0.0",
-    "name": "AnimeStremio (Eng Dub)",
+    "name": "PaheKai (Eng Dub)",
     "description": "Streams from AnimePahe & AnimeKai",
     "resources": ["stream"],
     "types": ["series", "movie"],
