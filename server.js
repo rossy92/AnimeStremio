@@ -1,10 +1,9 @@
-const { getStreamsForEpisode } = require("./providers/animepahe");
+const { getStreamsForEpisode: getPaheStreams } = require("./providers/animepahe");
+const { getStreamsForEpisode: getKaiStreams } = require("./providers/animekai");
 
 builder.defineStreamHandler(async ({ type, id }) => {
   try {
-    if (type !== "series") {
-      return { streams: [] };
-    }
+    if (type !== "series") return { streams: [] };
 
     // id = anilist:ANILIST_ID:EPISODE
     const parts = id.split(":");
@@ -13,8 +12,12 @@ builder.defineStreamHandler(async ({ type, id }) => {
     const anilistId = parts[1];
     const episode = parts[2];
 
-    const streams = await getStreamsForEpisode(anilistId, episode);
+    // Prova AnimePahe prima
+    let streams = await getPaheStreams(anilistId, episode);
+    if (streams.length > 0) return { streams };
 
+    // Fallback su AnimeKai
+    streams = await getKaiStreams(anilistId, episode);
     return { streams };
 
   } catch (err) {
