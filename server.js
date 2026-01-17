@@ -1,25 +1,20 @@
-const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
+const { serveHTTP } = require("stremio-addon-sdk");
 const builder = require("./manifest");
 
-// --- GESTIONE DEGLI STREAM ---
-// Questa funzione intercetta la richiesta di Stremio quando un utente clicca su un episodio
+// Importiamo la logica di ricerca (Assicurati che il file esista in /providers)
+const animePahe = require("./providers/animepahe");
+
 builder.defineStreamHandler(async (args) => {
     const { type, id } = args;
-
-    // Log per il debug su Render (lo vedrai nei log della dashboard)
-    console.log("Richiesta stream per:", type, id);
+    console.log(`Richiesta stream per: ${id}`);
 
     if (type === "series" || type === "movie") {
         try {
-            // Qui l'addon cerca i link nei tuoi provider (AnimePahe / AnimeKai)
-            // Nota: sto assumendo che i tuoi file in /providers esportino funzioni di ricerca
-            // Se i nomi dei file o delle funzioni sono diversi, dovrai adattarli.
-            
-            // Esempio generico di risposta (sostituisci con la logica dei tuoi provider):
-            return { streams: [] }; 
-            
+            // Cerchiamo i link usando la funzione definita in animepahe.js
+            const streams = await animePahe.getStreams(id);
+            return { streams: streams || [] };
         } catch (error) {
-            console.error("Errore durante il recupero dello stream:", error);
+            console.error("Errore nel recupero degli stream:", error);
             return { streams: [] };
         }
     }
@@ -27,12 +22,9 @@ builder.defineStreamHandler(async (args) => {
     return { streams: [] };
 });
 
-// --- AVVIO DEL SERVER (Configurazione per Render) ---
-// Render assegna automaticamente una porta tramite process.env.PORT.
-// Se non la trova (es. in locale), usa la 7000.
+// Configurazione Porta fondamentale per Render
 const port = process.env.PORT || 7000;
 
 serveHTTP(builder.getInterface(), { port: port });
 
-console.log(`Addon online su http://localhost:${port}/manifest.json`);
-module.exports = builder;
+console.log(`Addon HTTP pronto su porta: ${port}`);
