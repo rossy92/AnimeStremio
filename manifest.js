@@ -4,7 +4,7 @@ module.exports = {
   name: "AnimeStremio",
   description: "Stremio addon for English dubbed anime",
   types: ["series"],
-  catalogs: [],           // <-- deve essere un array, anche vuoto
-  resources: ["stream"],  // solo stream per ora
+  catalogs: [],          // deve essere un array, anche vuoto
+  resources: ["stream"],
   idPrefixes: ["anilist:"]
 };
