@@ -1,4 +1,4 @@
-# 🎬 AnimeStremio Addon (English Dub)
+# 🎬 PaheKai Addon (English Dub)
 
 A Stremio addon to watch **English dubbed anime** with ease.  
 
