@@ -1,5 +1,4 @@
-async function getStreamsForEpisode(anilistId, episode) {
-  // test: array vuoto
+0async function getStreamsForEpisode(anilistId, episode) {
   return [];
 }
 
