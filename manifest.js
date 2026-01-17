@@ -1,12 +1,14 @@
 const { addonBuilder } = require("stremio-addon-sdk");
 
 const manifest = {
-    "id": "org.animestremio.rossy",
+    "id": "org.animestremio.rossy92",
     "version": "1.0.0",
-    "name": "AnimeStremio",
+    "name": "AnimeStremio (Eng Dub)",
+    "description": "Watch English dubbed anime from AnimePahe and AnimeKai",
     "resources": ["stream"],
     "types": ["series", "movie"],
-    "idPrefixes": ["tt", "kitsu"] // tt per IMDb, kitsu per gli anime
+    "idPrefixes": ["tt", "kitsu"],
+    "catalogs": []
 };
 
 const builder = new addonBuilder(manifest);
