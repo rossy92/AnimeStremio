@@ -1,15 +1,15 @@
 {
   "name": "animestremio",
   "version": "1.0.0",
-  "description": "Stremio addon for Anime English Dub",
+  "description": "Stremio addon for English Dub Anime",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "install": "npm install"
+    "start": "node server.js"
   },
   "dependencies": {
     "stremio-addon-sdk": "^1.6.10",
     "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "needle": "^3.2.0"
   }
 }
