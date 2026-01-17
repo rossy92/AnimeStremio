@@ -1,12 +1,14 @@
 {
-  "name": "anikai-plus",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "animestremio",
+  "version": "0.1.0",
+  "description": "Stremio addon for English dubbed anime",
+  "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "axios": "latest",
-    "cheerio": "latest"
+    "stremio-addon-sdk": "^1.6.10",
+    "axios": "^1.6.0"
   }
 }
