@@ -1,14 +1,28 @@
-# AnimeStremio
+# AnimeStremio Addon (English Dub)
 
-Questo addon per Stremio unisce i link di diversi siti di anime italiani e internazionali.
+This is a Stremio addon for watching English dubbed anime.
 
-### Siti inclusi:
-- **Italiani:** AniKai, AnimeWorld, AnimeSaturn, AnimeUnity.
-- **Internazionali:** AnimePahe, 9Anime, HiAnime, AnimeGG.
+## Features
 
-### Come installarlo:
-1. Copia l'URL della tua istanza (es. `https://tuo-app.koyeb.app/manifest.json`).
-2. Incollalo nella barra di ricerca degli Addon su Stremio.
+- Streams English dubbed anime from **AnimePahe** (primary)
+- Fallback to **AnimeKai** if no stream is available
+- Only `stream` resource (no catalog or metadata)
+- Works directly on Stremio via URL
 
-### Sviluppo:
-Creato con Node.js e Stremio SDK.
+## How to Install
+
+1. Deploy the addon on Render (or any Node.js hosting)
+2. Copy the `manifest.json` URL
+3. Open Stremio → Add-ons → "Community Add-ons" → +  
+4. Select "Install from URL" and paste the manifest URL
+
+## Usage
+
+- Search for an anime on AniList / MAL
+- Click the episode → addon will fetch the stream
+- Streams automatically fall back to AnimeKai if AnimePahe doesn't have it
+
+## Notes
+
+- No placeholder videos; if no stream is found, nothing is displayed
+- Free and maintained for personal use
