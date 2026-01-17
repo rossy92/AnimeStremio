@@ -1,11 +1,26 @@
-const { serveHTTP } = require("stremio-addon-sdk");
-const addonInterface = require("./addon");
+const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
+const manifest = require("./manifest");
 
-const port = process.env.PORT || 8000;
+const builder = new addonBuilder(manifest);
 
-serveHTTP(addonInterface, { 
-    port: port,
-    hostname: "0.0.0.0"
+// STREAM HANDLER
+builder.defineStreamHandler(async ({ type, id }) => {
+  try {
+    if (type !== "series") {
+      return { streams: [] };
+    }
+
+    // Per ora: nessuno stream
+    // (così NON appare il coniglio grasso)
+    return { streams: [] };
+
+  } catch (err) {
+    console.error("Stream error:", err);
+    return { streams: [] };
+  }
 });
 
-console.log(`Server attivo sulla porta ${port}`);
+const PORT = process.env.PORT || 7000;
+serveHTTP(builder.getInterface(), { port: PORT });
+
+console.log("AnimeStremio addon running on port", PORT);
