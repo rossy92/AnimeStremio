@@ -30,6 +30,5 @@ builder.defineStreamHandler(async ({ type, id }) => {
 });
 
 // ---- Porta obbligatoria per Render ----
-const PORT = process.env.PORT || 7000;
-serveHTTP(builder.getInterface(), { port: PORT });
-console.log("AnimeStremio addon running on port", PORT);
+const port = process.env.PORT || 7000;
+serveHTTP(builder.getInterface(), { port: port });
