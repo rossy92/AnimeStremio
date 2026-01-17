@@ -1,16 +1,23 @@
-const { addonBuilder } = require("stremio-addon-sdk");
+const { serveHTTP } = require("stremio-addon-sdk");
+const builder = require("./manifest");
 
-const manifest = {
-    "id": "org.animestremio.rossy92",
-    "version": "1.0.0",
-    "name": "AnimeStremio (Eng Dub)",
-    "description": "Watch English dubbed anime from AnimePahe and AnimeKai",
-    "resources": ["stream"],
-    "types": ["series", "movie"],
-    "idPrefixes": ["tt", "kitsu"],
-    "catalogs": []
-};
+// Gestione degli stream
+builder.defineStreamHandler(async (args) => {
+    const { type, id } = args;
+    console.log(`Richiesta stream per ID: ${id} di tipo: ${type}`);
 
-const builder = new addonBuilder(manifest);
+    // NOTA: Qui dovresti chiamare la logica dei tuoi file in /providers.
+    // Per ora restituiamo una lista vuota per assicurarci che il server sia stabile.
+    return { streams: [] };
+});
 
-module.exports = builder;
+// Configurazione Porta per Render
+const port = process.env.PORT || 7000;
+
+// Avvio del server
+serveHTTP(builder.getInterface(), { 
+    port: port,
+    cacheMaxAge: 3600 // Opzionale: cache di 1 ora
+});
+
+console.log(`Addon pronto su: http://localhost:${port}/manifest.json`);
