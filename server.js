@@ -30,5 +30,7 @@ builder.defineStreamHandler(async ({ type, id }) => {
 });
 
 // ---- Porta obbligatoria per Render ----
+const { serveHTTP } = require("stremio-addon-sdk");
 const port = process.env.PORT || 7000;
+
 serveHTTP(builder.getInterface(), { port: port });
